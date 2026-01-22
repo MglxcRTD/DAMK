@@ -1,0 +1,77 @@
+<div class="home-wrapper">
+  
+  <nav class="top-navbar">
+    <div class="nav-left">
+      <button class="menu-toggle" (click)="toggleSidebar()">
+        <i class="material-icons">menu</i>
+      </button>
+      
+      <div class="brand-center">
+        <img src="damk logo.png" alt="Logo">
+        <span class="brand-name">DAMK</span>
+      </div>
+    </div>
+
+    <div class="nav-center">
+      <div class="search-box">
+        <i class="material-icons">search</i>
+        <input type="text" placeholder="Buscar apuntes o dudas...">
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <button class="action-icon"><i class="material-icons">mail</i></button>
+      <button class="action-icon"><i class="material-icons">notifications</i></button>
+      
+      <div class="user-profile">
+        <div class="user-text">
+          <span class="name">Pato</span>
+          <span class="rank">120 pts</span>
+        </div>
+        <div class="avatar-circle">
+          <i class="material-icons">account_circle</i>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-layout">
+    <aside class="sidebar" [class.collapsed]="!sidebarOpen">
+      <ul class="nav-list">
+        <li class="active"><i class="material-icons">dashboard</i> <span>Inicio</span></li>
+        <li><i class="material-icons">description</i> <span>Mis Apuntes</span></li>
+        <li><i class="material-icons">school</i> <span>Profesores</span></li>
+        <li><i class="material-icons">forum</i> <span>Foro de dudas</span></li>
+        <li><i class="material-icons">event</i> <span>Calendario</span></li>
+        <li><i class="material-icons">workspace_premium</i> <span>Logros</span></li>
+      </ul>
+      
+      <div class="sidebar-bottom">
+        <li class="logout-link"><i class="material-icons">logout</i> <span>Cerrar Sesión</span></li>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="container">
+        <div class="course-selector">
+          <button class="btn-course active">PRIMERO</button>
+          <button class="btn-course">SEGUNDO</button>
+        </div>
+
+        <header class="welcome-section">
+          <h2>¡Hola de nuevo!</h2>
+          <p>Selecciona una asignatura para empezar a estudiar.</p>
+        </header>
+
+        <div class="subjects-grid">
+          <div class="subject-card marcas"><span>Lenguaje de Marcas</span></div>
+          <div class="subject-card prog"><span>Programación</span></div>
+          <div class="subject-card sistemas"><span>Sistemas Operativos</span></div>
+          <div class="subject-card cloud"><span>Cloud Computing</span></div>
+          <div class="subject-card bd"><span>Base de Datos</span></div>
+          <div class="subject-card entornos"><span>Entornos de Desarrollo</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,47 @@
+DIA 1:
+------
+- He creado el proyecto de Springboot con las dependencias correspondientes para el proyecto
+- He ajustando el .yml y he comprobado que la conexión con MySQL es correcta.
+- He Configurado los permisos para poder conectar angular con springboot
+- He creado el proyecto de Angular
+------
+DIA 2:
+------
+- He comenzado con la entidad Usuario, esto implica el registro, la diferenciación por roles... etc
+- He tenido bastantes problemas con spring security, es un poco difícil de comprender
+- La idea de usar APIs de Google o GitHub me ha parecido una idea super buena y la quiero implementar
+- En un principio creo que voy bien de tiempo y creo que puedo cumplir con la idea básica del proyecto.
+------
+DIA 3:
+------
+- He introducido BCript para cifrar las contraseñas
+- Me he puesto con el apartado visual de registro de usuario, angular al final es bastante lineal, aunque el typeScript se hace complicado
+- El scss se ve mas completo y que puedes hacer mas cosas, pero difícil de entender también
+------
+DIA 4:
+------
+- Ha tocado configurar todo lo que es iniciar usuario con Google o GitHub
+- Me ha llevado toda la mañana, cada vez comprendo mas como funciona Spring Security
+- Aunque organizar el registro con Google y GitHub ha sido un reto
+- El siguiente dia me pondré con el home
+- Me preocupa que el inicio de sesión se vea como si lo hubiera hecho una IA, tengo que trabajar en ello
+------
+DIA 5:
+------
+- Mejoré el inicio de sesión para que se viera más vistoso
+- Consolidé el inicio de sesión con Google y GitHub
+------
+DIA 6:
+------
+- Desarrollé el login
+- Corregí ciertos fallos en el registro y el login
+- Empecé a hacer los dibujos para visualizar como quería que se viera la interfaz
+- Desarrollé la lógica de usuario a la hora de usar la app
+------
+DIA 7:
+------
+- Pulí las validaciones de registro
+- Desarrollé la interfaz del home
+------
+DIA 8:
+------

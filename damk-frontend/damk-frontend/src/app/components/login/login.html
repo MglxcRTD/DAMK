@@ -1,0 +1,60 @@
+<div class="page-wrapper">
+  <div class="split-container">
+    
+    <div class="brand-section">
+      <div class="duck-container">
+        <img src="damk logo.png" alt="DAMK Duck" class="main-duck">
+      </div>
+      <div class="brand-info">
+        <h1>DAMK</h1>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-content">
+        <header>
+          <h2>Bienvenido</h2>
+          <p>Entra para gestionar tus apuntes.</p>
+        </header>
+
+        <form (submit)="onLogin($event)">
+          <div class="input-group">
+            <label>Usuario</label>
+            <input 
+              type="text" 
+              [(ngModel)]="credentials.username" 
+              name="username" 
+              placeholder="Tu alias" 
+              required>
+          </div>
+
+          <div class="input-group">
+            <label>Contraseña</label>
+            <input 
+              type="password" 
+              [(ngModel)]="credentials.password" 
+              name="password" 
+              placeholder="••••••••" 
+              required>
+          </div>
+
+          <button type="submit" class="btn-primary">Entrar</button>
+        </form>
+
+        <div class="divider"><span>o entra con</span></div>
+
+        <div class="social-auth">
+          <a href="http://localhost:8080/oauth2/authorization/google" class="btn-social">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google Logo"> Google
+          </a>
+          <a href="http://localhost:8080/oauth2/authorization/github" class="btn-social">
+            <img src="https://www.svgrepo.com/show/475654/github-color.svg" alt="GitHub Logo"> GitHub
+          </a>
+        </div>
+
+        <p class="change-mode">¿No tienes cuenta? <a routerLink="/registro">Crea una aquí</a></p>
+      </div>
+    </div>
+
+  </div>
+</div>

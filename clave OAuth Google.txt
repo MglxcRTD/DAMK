@@ -1,0 +1,13 @@
+------
+GOOGLE
+------
+
+ID_cliente: 435099304628-mqat727ktnmb9fto3phpjn6b565qubqr.apps.googleusercontent.com
+ID_PRIV_CLIENTE: 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
+
+------
+GITHUB
+------
+
+ID_cliente: Ov23lim91aSHEPaq6RI9
+Secreto_cliente: 20a96dd0e56d183e3ec885426bd3b1b49a975621

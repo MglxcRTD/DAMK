@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/damk_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: root
+    password: 3306
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 435099304628-mqat727ktnmb9fto3phpjn6b565qubqr.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+          github:
+            client-id: Ov23lim91aSHEPaq6RI9
+            client-secret: 20a96dd0e56d183e3ec885426bd3b1b49a975621
+            scope:
+              - read:user
+              - user:email

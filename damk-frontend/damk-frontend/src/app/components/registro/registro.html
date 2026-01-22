@@ -1,0 +1,86 @@
+<div class="page-wrapper">
+  <div class="split-container">
+    
+    <div class="brand-section">
+      <div class="duck-graphic">
+        <img src="damk logo.png" alt="DAMK Duck" class="main-duck">
+      </div>
+      <div class="brand-text">
+        <h1>DAMK</h1>
+       
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-content">
+        <header>
+          <h2>¡Hola!</h2>
+          <p>Crea tu cuenta en un paso.</p>
+        </header>
+
+        <div class="social-auth">
+          <button (click)="loginGoogle()" class="btn-social" type="button">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt=""> Google
+          </button>
+          <button (click)="loginGithub()" class="btn-social" type="button">
+            <img src="https://www.svgrepo.com/show/475654/github-color.svg" alt=""> GitHub
+          </button>
+        </div>
+
+        <div class="divider"><span>o con email</span></div>
+
+        <form #regForm="ngForm" (submit)="onSubmit($event)">
+          
+          <div class="input-group" [ngClass]="{
+            'group-error': uName.invalid && uName.touched,
+            'group-success': uName.valid && uName.touched
+          }">
+            <div class="label-row">
+              <label>Usuario</label>
+              <small class="msg-hint" *ngIf="uName.invalid && uName.touched">Mínimo 3 letras</small>
+              <i class="material-icons success-icon" *ngIf="uName.valid && uName.touched">check_circle</i>
+            </div>
+            <input type="text" [(ngModel)]="usuario.username" name="username" 
+                   placeholder="Tu alias" required minlength="3" #uName="ngModel">
+          </div>
+
+          <div class="input-group" [ngClass]="{
+            'group-error': uEmail.invalid && uEmail.touched,
+            'group-success': uEmail.valid && uEmail.touched
+          }">
+            <div class="label-row">
+              <label>Email</label>
+              <small class="msg-hint" *ngIf="uEmail.invalid && uEmail.touched">Email inválido</small>
+              <i class="material-icons success-icon" *ngIf="uEmail.valid && uEmail.touched">check_circle</i>
+            </div>
+            <input type="email" [(ngModel)]="usuario.email" name="email" 
+       placeholder="tu@correo.com" required 
+       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" #uEmail="ngModel">
+          </div>
+
+          <div class="input-group" [ngClass]="{
+            'group-error': uPass.invalid && (uPass.touched || uPass.dirty),
+            'group-success': uPass.valid
+          }">
+            <div class="label-row">
+              <label>Contraseña</label>
+              <small class="msg-hint" *ngIf="uPass.invalid && (uPass.touched || uPass.dirty)">Mínimo 8 caracteres</small>
+              <i class="material-icons success-icon" *ngIf="uPass.valid">check_circle</i>
+            </div>
+            <input type="password" [(ngModel)]="usuario.password" name="password" 
+                   placeholder="••••••••" required minlength="8" #uPass="ngModel">
+          </div>
+
+          <button type="submit" class="btn-primary" [disabled]="regForm.invalid">Registrarse</button>
+        </form>
+
+        <p class="change-mode">
+          ¿Ya tienes cuenta? <a routerLink="/login">Entra aquí</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
