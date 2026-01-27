@@ -1,0 +1,90 @@
+<div class="perfil-container">
+  <div class="container-inner">
+    <header class="perfil-header">
+      <button class="btn-back" (click)="irAHome()">
+        <i class="material-icons">arrow_back</i>
+      </button>
+      <h1>Configuración</h1>
+    </header>
+
+    <main class="perfil-card">
+      <div class="avatar-wrapper">
+        <input type="file" #fotoInput (change)="onFileSelected($event)" accept="image/*" style="display: none">
+        <div class="main-avatar" (click)="fotoInput.click()">
+          <img *ngIf="previsualizacionFoto" [src]="previsualizacionFoto" class="img-avatar">
+          <img *ngIf="!previsualizacionFoto && usuario?.avatarUrl" [src]="usuario.avatarUrl" class="img-avatar">
+          <div *ngIf="!previsualizacionFoto && !usuario?.avatarUrl" class="avatar-pato-default">
+            <i class="material-icons">account_circle</i>
+          </div>
+        </div>
+      </div>
+
+      <div class="user-details">
+        <h2>{{ usuario?.username || 'Cargando...' }}</h2>
+        <span class="email">{{ usuario?.email }}</span>
+        <div class="stats-row">
+          <div class="stat">
+            <span class="value">{{ usuario?.puntosReputacion || 0 }}</span>
+            <span class="label">Puntos</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <section class="config-grid">
+      <div class="config-card" (click)="abrirAjustesCuenta()">
+        <i class="material-icons">manage_accounts</i>
+        <div class="text-wrapper">
+          <span>Ajustes de Cuenta</span>
+          <small>Username, Email y Password</small>
+        </div>
+      </div>
+
+      <div class="config-card" (click)="toggleTheme()">
+        <i class="material-icons">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</i>
+        <div class="text-wrapper">
+          <span>Apariencia</span>
+          <small>Modo: {{ isDarkMode ? 'Oscuro' : 'Claro' }}</small>
+        </div>
+      </div>
+
+      <div class="config-card logout" (click)="cerrarSesion()">
+        <i class="material-icons">logout</i>
+        <div class="text-wrapper">
+          <span>Cerrar Sesión</span>
+          <small>Salir de DAMK</small>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" *ngIf="editando" (click)="editando = false">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajustes de Cuenta</h3>
+        <button class="btn-close" (click)="editando = false"><i class="material-icons">close</i></button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="input-group">
+          <label>Usuario</label>
+          <input [(ngModel)]="usuarioEdit.username" type="text" placeholder="Tu nombre">
+        </div>
+        <div class="input-group">
+          <label>Email</label>
+          <input [(ngModel)]="usuarioEdit.email" type="email" placeholder="pato@ejemplo.com">
+        </div>
+        <div class="input-group">
+          <label>Nueva Contraseña</label>
+          <input [(ngModel)]="usuarioEdit.password" type="password" placeholder="••••••••">
+          <small class="helper-text">Mínimo 8 caracteres para mayor seguridad.</small>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="editando = false">Cancelar</button>
+        <button class="btn-save" (click)="guardarCambios()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>

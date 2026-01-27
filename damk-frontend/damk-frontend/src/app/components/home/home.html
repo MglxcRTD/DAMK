@@ -1,11 +1,9 @@
 <div class="home-wrapper">
-  
   <nav class="top-navbar">
     <div class="nav-left">
       <button class="menu-toggle" (click)="toggleSidebar()">
         <i class="material-icons">menu</i>
       </button>
-      
       <div class="brand-center">
         <img src="damk logo.png" alt="Logo">
         <span class="brand-name">DAMK</span>
@@ -20,16 +18,17 @@
     </div>
 
     <div class="nav-right">
-      <button class="action-icon"><i class="material-icons">mail</i></button>
+      <button class="action-icon" (click)="irAMensajes()"><i class="material-icons">mail</i></button>
       <button class="action-icon"><i class="material-icons">notifications</i></button>
       
-      <div class="user-profile">
+      <div class="user-profile" (click)="irAPerfil()">
         <div class="user-text">
-          <span class="name">Pato</span>
-          <span class="rank">120 pts</span>
+          <span class="name">{{ usuarioActivo.username }}</span>
+          <span class="rank">{{ usuarioActivo.puntosReputacion }} pts</span>
         </div>
         <div class="avatar-circle">
-          <i class="material-icons">account_circle</i>
+          <img *ngIf="usuarioActivo.avatarUrl" [src]="usuarioActivo.avatarUrl" class="avatar-img-nav">
+          <i *ngIf="!usuarioActivo.avatarUrl" class="material-icons">account_circle</i>
         </div>
       </div>
     </div>
@@ -41,35 +40,38 @@
         <li class="active"><i class="material-icons">dashboard</i> <span>Inicio</span></li>
         <li><i class="material-icons">description</i> <span>Mis Apuntes</span></li>
         <li><i class="material-icons">school</i> <span>Profesores</span></li>
-        <li><i class="material-icons">forum</i> <span>Foro de dudas</span></li>
+        <li (click)="irAMensajes()"><i class="material-icons">forum</i> <span>Foro de dudas</span></li>
         <li><i class="material-icons">event</i> <span>Calendario</span></li>
         <li><i class="material-icons">workspace_premium</i> <span>Logros</span></li>
       </ul>
-      
       <div class="sidebar-bottom">
-        <li class="logout-link"><i class="material-icons">logout</i> <span>Cerrar Sesión</span></li>
+        <li class="logout-link" (click)="cerrarSesion()">
+          <i class="material-icons">logout</i> <span>Cerrar Sesión</span>
+        </li>
       </div>
     </aside>
 
     <main class="main-content">
       <div class="container">
         <div class="course-selector">
-          <button class="btn-course active">PRIMERO</button>
-          <button class="btn-course">SEGUNDO</button>
+          <button class="btn-course" [class.active]="cursoSeleccionado === 'PRIMERO'" (click)="setCurso('PRIMERO')">PRIMERO</button>
+          <button class="btn-course" [class.active]="cursoSeleccionado === 'SEGUNDO'" (click)="setCurso('SEGUNDO')">SEGUNDO</button>
         </div>
 
         <header class="welcome-section">
-          <h2>¡Hola de nuevo!</h2>
-          <p>Selecciona una asignatura para empezar a estudiar.</p>
+          <div class="welcome-text">
+            <h2>¡Hola de nuevo, {{ usuarioActivo.username }}!</h2>
+            <p>Selecciona una asignatura para empezar a estudiar.</p>
+          </div>
         </header>
 
         <div class="subjects-grid">
-          <div class="subject-card marcas"><span>Lenguaje de Marcas</span></div>
-          <div class="subject-card prog"><span>Programación</span></div>
-          <div class="subject-card sistemas"><span>Sistemas Operativos</span></div>
-          <div class="subject-card cloud"><span>Cloud Computing</span></div>
-          <div class="subject-card bd"><span>Base de Datos</span></div>
-          <div class="subject-card entornos"><span>Entornos de Desarrollo</span></div>
+          <div class="subject-card marcas" (click)="verAsignatura('Lenguaje de Marcas')"><span>Lenguaje de Marcas</span></div>
+          <div class="subject-card prog" (click)="verAsignatura('Programación')"><span>Programación</span></div>
+          <div class="subject-card sistemas" (click)="verAsignatura('Sistemas Informáticos')"><span>Sistemas Informáticos</span></div>
+          <div class="subject-card cloud" (click)="verAsignatura('Cloud Computing')"><span>Cloud Computing</span></div>
+          <div class="subject-card bd" (click)="verAsignatura('Base de Datos')"><span>Base de Datos</span></div>
+          <div class="subject-card entornos" (click)="verAsignatura('Entornos de Desarrollo')"><span>Entornos de Desarrollo</span></div>
         </div>
       </div>
     </main>

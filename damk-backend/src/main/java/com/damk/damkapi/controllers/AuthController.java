@@ -1,6 +1,7 @@
 package com.damk.damkapi.controllers;
 
 import com.damk.damkapi.entities.Usuario;
+import com.damk.damkapi.repositories.UsuarioRepository; // Necesitamos esto
 import com.damk.damkapi.services.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,8 @@ public class AuthController {
     @Autowired
     UsuarioService usuarioService;
 
+    @Autowired
+    UsuarioRepository usuarioRepository;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -32,14 +35,12 @@ public class AuthController {
 
             return ResponseEntity.ok(Map.of(
                     "message", "Usuario " + nuevousuario.getUsername() + " registrado correctamente",
-                    "username", nuevousuario.getUsername()
+                    "user", nuevousuario
             ));
         } catch(RuntimeException e) {
-
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
@@ -54,10 +55,17 @@ public class AuthController {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            return ResponseEntity.ok(Map.of("message", "Login exitoso"));
+
+            Usuario usuario = usuarioRepository.findByUsername(loginRequest.get("username"))
+                    .orElseThrow(() -> new RuntimeException("Error al recuperar los datos del usuario"));
+
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Login exitoso",
+                    "user", usuario
+            ));
 
         } catch (Exception e) {
-
             return ResponseEntity.status(401).body(Map.of("error", "Usuario o contraseña incorrectos"));
         }
     }

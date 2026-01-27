@@ -1,11 +1,87 @@
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.material-icons {
+  color: inherit; /* Esto hace que usen var(--text-main) automáticamente */
+  vertical-align: middle;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+  border: 2px solid var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pato-orange);
+}
+
+:root {
+  /* Identidad DAMK */
+  --pato-yellow: #FFD200;
+  --pato-orange: #FF8C00;
+  --pato-red: #ff7675;
+
+  /* TEMA CLARO (Fix de Visibilidad) */
+  --bg-app: #f0f2f5;           
+  --bg-card: #ffffff;          
+  --text-main: #1a1c1e;        /* Negro profundo para que SE VEA */
+  --text-muted: #5f6368;       /* Gris oscuro para secundarios */
+  --border-color: #dadce0;
+  --input-bg: #f1f3f4;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --pato-grad: linear-gradient(135deg, var(--pato-yellow) 0%, var(--pato-orange) 100%);
+  --border-ui: rgba(0, 0, 0, 0.08); /* Borde suave en claro */
+  --shadow-ui: var(--shadow);
+}
+
+body.dark-theme {
+  /* TEMA OSCURO (Deep Slate) */
+  --bg-app: #0f1113;           
+  --bg-card: #1c1f23;          
+  --text-main: #e8eaed;        /* Blanco roto para no deslumbrar */
+  --text-muted: #9aa0a6;
+  --border-color: #3c4043;
+  --input-bg: #2d3135;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --border-ui: rgba(255, 255, 255, 0.1); /* Borde que brilla un poco en oscuro */
+  --shadow-ui: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
 body {
+  margin: 0;
   font-family: 'Poppins', sans-serif;
-  background-color: #2e0854; 
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Fix crítico: Cerrar Sesión (image_bb93f2) */
+.config-card.logout {
+  background-color: rgba(255, 118, 117, 0.1) !important;
+  color: var(--pato-red) !important;
+  border: 1px solid transparent !important;
+  i, span { color: var(--pato-red) !important; }
+  &:hover {
+    background: var(--pato-red) !important;
+    color: white !important;
+    i, span { color: white !important; }
+  }
+
+
+}
+
+  body.dark-theme img {
+  filter: brightness(0.8) contrast(1.1);
+  transition: filter 0.3s ease;
+}
+
+body.dark-theme img:hover {
+  filter: brightness(1); /* Recupera brillo al pasar el ratón */
 }

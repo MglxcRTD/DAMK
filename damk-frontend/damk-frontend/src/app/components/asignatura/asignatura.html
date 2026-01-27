@@ -1,0 +1,106 @@
+<div class="subject-wrapper">
+  
+  <header class="main-header">
+    <button class="btn-back-nav" (click)="volver()">
+      <i class="material-icons">arrow_back</i>
+    </button>
+    
+    <div class="centered-title-group">
+      <h1>{{ nombreAsignatura }}</h1>
+      <span class="course-tag">1º DAM</span>
+    </div>
+
+    <button class="btn-upload-nav" (click)="fileInput.click()">
+      <i class="material-icons">cloud_upload</i>
+      <span>SUBIR APUNTES</span>
+    </button>
+    <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none" accept=".pdf">
+  </header>
+
+  <div class="subject-layout">
+    <main class="notes-feed">
+      <article class="file-card-premium" *ngFor="let archivo of listaArchivos">
+        
+        <div class="card-top-header">
+          <h2>{{ archivo.nombre }}</h2>
+          <div class="status-rect" [class.verified]="archivo.verificado">
+            <i class="material-icons">{{ archivo.verificado ? 'verified' : 'history' }}</i>
+            <span>{{ archivo.verificado ? 'VERIFICADO' : 'PENDIENTE' }}</span>
+          </div>
+        </div>
+
+        <div class="card-main-grid">
+          <div class="download-column">
+            <button class="btn-dl-hero" (click)="descargarArchivo(archivo)">
+              <i class="material-icons">file_download</i>
+            </button>
+          </div>
+
+          <div class="pdf-portrait">
+            <img [src]="archivo.portadaUrl" alt="Portada Real del PDF">
+          </div>
+
+          <div class="info-column">
+            <div class="meta-box">
+              <span>Publicado por</span>
+              <strong>{{ archivo.autor }}</strong>
+            </div>
+            <div class="meta-box">
+              <span>Fecha de subida</span>
+              <strong>{{ archivo.fecha }}</strong>
+            </div>
+            <div class="author-note-container">
+              <p>{{ archivo.comentarioAutor || 'Sin descripción del autor.' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <footer class="card-footer-comments">
+          <div class="comment-bubble" *ngFor="let c of archivo.comentariosDestacados">
+            <b>@{{ c.usuario }}</b> {{ c.texto }}
+          </div>
+          
+          <div class="add-comment-area">
+            <input 
+              type="text" 
+              [(ngModel)]="archivo.nuevoComentario" 
+              placeholder="Escribe un comentario sobre este PDF..."
+              (keyup.enter)="enviarComentarioArchivo(archivo)">
+            <button (click)="enviarComentarioArchivo(archivo)" [disabled]="!archivo.nuevoComentario">
+              <i class="material-icons">add_comment</i>
+            </button>
+          </div>
+        </footer>
+      </article>
+    </main>
+
+    <aside class="forum-sidebar">
+      <h3>FORO GENERAL</h3>
+      <div class="chat-scroll">
+        <div class="msg-card" *ngFor="let m of comentariosForo">
+          <div class="avatar-sm">
+            <img [src]="m.avatarUrl || 'assets/default-user.png'">
+          </div>
+          <div class="msg-body">
+            <div class="msg-header">
+              <span class="user-nick">{{ m.usuario }}</span>
+              <small class="msg-time">{{ m.fecha }}</small>
+            </div>
+            <p>{{ m.texto }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="forum-input-zone">
+        <input 
+          type="text" 
+          [(ngModel)]="nuevoMensajeForo" 
+          (keyup.enter)="enviarMensajeForo()" 
+          placeholder="Pregunta algo al grupo...">
+        <button (click)="enviarMensajeForo()" [disabled]="!nuevoMensajeForo">
+          <i class="material-icons">send</i>
+        </button>
+      </div>
+    </aside>
+  </div>
+</div>

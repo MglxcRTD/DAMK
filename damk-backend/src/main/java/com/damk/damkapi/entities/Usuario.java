@@ -42,6 +42,9 @@ public class Usuario {
     @Column(name = "puntos_reputacion")
     private int puntosReputacion = 0;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @Enumerated(EnumType.STRING)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private AuthProvider provider;

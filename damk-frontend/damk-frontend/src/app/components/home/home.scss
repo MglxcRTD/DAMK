@@ -1,3 +1,4 @@
+// Variables locales (mantenemos las tuyas por defecto)
 $amarillo-pato: #FFD200;
 $naranja-pico: #FF8C00;
 $gris-fondo: #f8f9fa;
@@ -5,18 +6,18 @@ $texto: #2d3436;
 
 .home-wrapper {
   min-height: 100vh;
-  background-color: $gris-fondo;
+  background-color: var(--bg-app); // Usamos variable para el fondo
   display: flex;
   flex-direction: column;
-
+  color: var(--text-main);
 
   .top-navbar {
     height: 75px;
-    background: white;
+    background: var(--bg-card); // Fondo dinámico
     display: flex;
     align-items: center;
     padding: 0 30px;
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid var(--border-color); // Borde dinámico
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -26,10 +27,6 @@ $texto: #2d3436;
       align-items: center;
       gap: 25px; 
       flex: none; 
-
-      .menu-toggle {
-        margin-right: 5px;
-      }
 
       .brand-center {
         display: flex;
@@ -42,14 +39,13 @@ $texto: #2d3436;
           font-family: 'Roboto Mono', monospace; 
           font-weight: 800; 
           font-size: 1.5rem; 
-          color: $texto;
+          color: var(--text-main); // Texto dinámico
           letter-spacing: -0.5px;
         }
       }
     }
 
     .nav-center {
-     
       flex: 1; 
       display: flex;
       justify-content: center;
@@ -58,13 +54,20 @@ $texto: #2d3436;
       .search-box {
         width: 100%;
         max-width: 600px;
-        background: #f1f3f4;
+        background: var(--input-bg); // Fondo input dinámico
         border-radius: 12px;
         padding: 10px 20px;
         display: flex;
         align-items: center;
-        i { color: #999; margin-right: 10px; }
-        input { background: none; border: none; width: 100%; outline: none; font-size: 0.95rem; }
+        i { color: var(--text-muted); margin-right: 10px; }
+        input { 
+          background: none; 
+          border: none; 
+          width: 100%; 
+          outline: none; 
+          font-size: 0.95rem; 
+          color: var(--text-main); // Texto input dinámico
+        }
       }
     }
 
@@ -81,21 +84,21 @@ $texto: #2d3436;
         gap: 12px;
         .user-text {
           text-align: right;
-          .name { display: block; font-weight: 700; font-size: 0.9rem; }
+          .name { display: block; font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
           .rank { font-size: 0.8rem; color: $naranja-pico; font-weight: 800; }
         }
         .avatar-circle {
           width: 40px; height: 40px;
-          background: #dfe6e9;
+          background: var(--input-bg); // Fondo avatar dinámico
           border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          i { font-size: 24px; color: #636e72; }
+          i { font-size: 24px; color: var(--text-muted); }
+          .avatar-img-nav { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
         }
       }
     }
   }
 
-  
   .main-layout {
     display: flex;
     flex: 1;
@@ -103,8 +106,8 @@ $texto: #2d3436;
 
     .sidebar {
       width: 260px;
-      background: white;
-      border-right: 1px solid #eee;
+      background: var(--bg-card); // Sidebar dinámica
+      border-right: 1px solid var(--border-color);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
@@ -125,16 +128,17 @@ $texto: #2d3436;
           gap: 15px;
           white-space: nowrap;
           cursor: pointer;
-          color: #636e72;
+          color: var(--text-muted); // Texto muteado dinámico
           font-weight: 600;
           transition: 0.2s;
           i { font-size: 22px; }
-          &:hover { background: #f8f9fa; color: $naranja-pico; }
+          &:hover { background: var(--bg-app); color: $naranja-pico; }
           &.active { 
             background: $amarillo-pato; 
-            color: $texto;
+            color: #1a1a1a; // Siempre oscuro sobre amarillo
             border-radius: 0 25px 25px 0;
             margin-right: 10px;
+            i { color: #1a1a1a; }
           }
         }
       }
@@ -143,9 +147,9 @@ $texto: #2d3436;
         margin-top: auto;
         padding-bottom: 20px;
         .logout-link {
-          color: #ff7675;
-          border-top: 1px solid #f5f5f5;
-          &:hover { background: #fff5f5; color: #d63031; }
+          color: var(--pato-red);
+          border-top: 1px solid var(--border-color);
+          &:hover { background: rgba(255, 118, 117, 0.1); color: var(--pato-red); }
         }
       }
     }
@@ -164,19 +168,20 @@ $texto: #2d3436;
           padding: 10px 30px;
           border-radius: 50px;
           border: 2px solid $amarillo-pato;
-          background: white;
+          background: var(--bg-card); // Botón curso dinámico
+          color: var(--text-main);
           font-weight: 800;
           cursor: pointer;
           transition: 0.3s;
-          &.active { background: $amarillo-pato; color: $texto; box-shadow: 0 4px 10px rgba($amarillo-pato, 0.3); }
+          &.active { background: $amarillo-pato; color: #1a1a1a; box-shadow: 0 4px 10px rgba($amarillo-pato, 0.3); }
           &:hover { background: rgba($amarillo-pato, 0.1); }
         }
       }
 
       .welcome-section {
         margin-bottom: 40px;
-        h2 { font-size: 2.2rem; margin-bottom: 5px; }
-        p { color: #636e72; font-size: 1.1rem; }
+        h2 { font-size: 2.2rem; margin-bottom: 5px; color: var(--text-main); }
+        p { color: var(--text-muted); font-size: 1.1rem; }
       }
 
       .subjects-grid {
@@ -184,19 +189,19 @@ $texto: #2d3436;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 25px;
         .subject-card {
-          background: white;
+          background: var(--bg-card); // Card dinámica
           height: 110px;
           border-radius: 18px;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 20px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+          box-shadow: var(--shadow);
           cursor: pointer;
           transition: all 0.3s ease;
-          border-left: 8px solid #ccc;
-          span { font-weight: 800; font-size: 1.1rem; text-align: center; color: $texto; }
-          &:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+          border-left: 8px solid var(--border-color);
+          span { font-weight: 800; font-size: 1.1rem; text-align: center; color: var(--text-main); }
+          &:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
           &.marcas { border-color: #55efc4; }
           &.prog { border-color: #0984e3; }
           &.sistemas { border-color: #a29bfe; }
@@ -210,14 +215,8 @@ $texto: #2d3436;
 }
 
 .action-icon, .menu-toggle {
-  background: none; border: none; cursor: pointer; color: $texto;
+  background: none; border: none; cursor: pointer; color: var(--text-main);
   display: flex; align-items: center; justify-content: center;
   i { font-size: 26px; transition: 0.2s; }
   &:hover i { color: $naranja-pico; transform: scale(1.1); }
-}
-
-.material-icons {
-  display: inline-block;
-  vertical-align: middle;
-  line-height: 1;
 }
