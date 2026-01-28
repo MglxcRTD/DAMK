@@ -1,6 +1,7 @@
 server:
   port: 8080
 
+
 spring:
   threads:
     virtual:
@@ -33,3 +34,15 @@ spring:
             scope:
               - read:user
               - user:email
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+
+
+cloudinary:
+  cloud_name: delpijtbh
+  api_key: "854165385252679"
+  api_secret: "Kq2V7UV795av10hdVkD0HtwrXhI"

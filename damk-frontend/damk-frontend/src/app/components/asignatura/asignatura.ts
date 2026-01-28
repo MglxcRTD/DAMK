@@ -1,5 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Configuración del worker necesaria para renderizar el PDF en el navegador
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 @Component({
   selector: 'app-asignatura',
@@ -8,92 +13,112 @@ import { ActivatedRoute, Router } from '@angular/router';
   styleUrl: './asignatura.scss'
 })
 export class Asignatura implements OnInit {
-  
   nombreAsignatura: string = '';
   listaArchivos: any[] = [];
-  mostrarSubida: boolean = false;
   nuevoMensajeForo: string = '';
+  
+  // Control de la ventana emergente de previsualización
+  archivoSeleccionado: any = null;
+  urlPrevisualizacion: SafeResourceUrl | null = null;
 
   comentariosForo: any[] = [
-    { 
-      usuario: 'Pato_DAM', 
-      texto: '¿Alguien tiene el PDF de la intro?', 
-      fecha: '12:30',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pato' 
-    },
-    { 
-      usuario: 'Admin', 
-      texto: 'Ya está verificado en la lista.', 
-      fecha: '12:45',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
-    }
+    { usuario: 'Pato_DAM', texto: '¿Alguien tiene el PDF de la intro?', fecha: '12:30', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pato' },
+    { usuario: 'Admin', texto: 'Ya está verificado en la lista.', fecha: '12:45', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' }
   ];
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(
+    private route: ActivatedRoute, 
+    private router: Router, 
+    private sanitizer: DomSanitizer
+  ) {}
 
   ngOnInit() {
     this.nombreAsignatura = this.route.snapshot.paramMap.get('nombre') || 'Asignatura';
     this.cargarArchivosPorAsignatura();
   }
 
-  // --- NAVEGACIÓN ---
-  volver() { 
-    this.router.navigate(['/home']); 
-  }
-
-  toggleUpload() {
-    this.mostrarSubida = !this.mostrarSubida;
-  }
-
-  // --- LÓGICA DE APUNTES ---
   cargarArchivosPorAsignatura() {
+    // Datos extraídos del documento real [cite: 1, 3, 12, 20]
     this.listaArchivos = [
       { 
-        nombre: 'Introduccion_XML.pdf', 
-        autor: 'Pato', 
-        fecha: '22/01/2026', 
+        nombre: 'UD3.XMLSchema.pdf', 
+        autor: 'Catalina Esteban González', // 
+        fecha: '25/10/2023', // 
         verificado: true, 
-        portadaUrl: 'https://edit.org/photos/img/blog/p95-plantillas-portadas-libros-revistas-editables-gratis.jpg',
-        comentarioAutor: 'Estos son los apuntes de la primera semana. He incluido los esquemas que el profesor dijo que eran más importantes para el examen final.',
+        urlReal: 'assets/docs/UD3.XMLSchema.pdf',
+        portadaUrl: '', 
+        comentarioAutor: 'Apuntes sobre UD2: XSD (XML Schema Definition). Define la estructura y validación de documentos XML.', // [cite: 12, 25]
         comentariosDestacados: [
           { usuario: 'Juan', texto: 'Buenísimos estos apuntes.' },
           { usuario: 'Maria', texto: 'Me han salvado el examen.' }
         ],
-        nuevoComentario: '' // Campo temporal para el input de cada PDF
+        nuevoComentario: ''
       }
     ];
+    
+    // Al cargar, generamos la miniatura de la primera página del PDF real
+    this.listaArchivos.forEach(archivo => this.generarPortadaReal(archivo));
   }
 
-  descargarArchivo(archivo: any) {
-    console.log('Solicitando descarga a Spring Boot de:', archivo.nombre);
-    // Simulación de delay de red
-    const toast = alert(`Iniciando descarga de ${archivo.nombre}...`);
+  // Genera una imagen a partir de la primera hoja del PDF para usarla como portada
+  async generarPortadaReal(archivo: any) {
+    try {
+      const loadingTask = pdfjsLib.getDocument(archivo.urlReal);
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 0.5 });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      if (!context) return;
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      // El objeto 'canvas' es requerido en versiones recientes de pdfjs-dist
+      const renderContext = { 
+        canvasContext: context, 
+        viewport: viewport,
+        canvas: canvas 
+      };
+
+      await page.render(renderContext).promise;
+      archivo.portadaUrl = canvas.toDataURL();
+    } catch (error) {
+      console.error("Error al generar la portada del PDF:", error);
+      archivo.portadaUrl = 'assets/img/default-pdf.png';
+    }
   }
 
   onFileSelected(event: any) { 
     const file = event.target.files[0];
     if (file) {
-      console.log('Iniciando subida de:', file.name);
-      // Simulación de proceso de subida
-      setTimeout(() => {
-        this.mostrarSubida = false;
-        alert(`¡${file.name} subido correctamente! Pendiente de verificación.`);
-      }, 800);
+      console.log('Archivo preparado para subir a Spring Boot:', file.name);
+      // Aquí dispararías el servicio de subida real
+      alert(`Archivo "${file.name}" listo para ser procesado.`);
     }
   }
 
-  // Enviar comentario específico a un PDF
-  enviarComentarioArchivo(archivo: any) {
-    if (archivo.nuevoComentario.trim()) {
-      archivo.comentariosDestacados.push({
-        usuario: 'Tú',
-        texto: archivo.nuevoComentario
-      });
-      archivo.nuevoComentario = ''; // Limpiar input
-    }
+  // Métodos para manejar la previsualización (Iframe seguro)
+  abrirPrevisualizacion(archivo: any) {
+    this.archivoSeleccionado = archivo;
+    this.urlPrevisualizacion = this.sanitizer.bypassSecurityTrustResourceUrl(archivo.urlReal);
   }
 
-  // --- LÓGICA DEL FORO ---
+  cerrarPrevisualizacion() {
+    this.archivoSeleccionado = null;
+    this.urlPrevisualizacion = null;
+  }
+
+  descargarArchivo(archivo: any) {
+    const link = document.createElement('a');
+    link.href = archivo.urlReal;
+    link.download = archivo.nombre;
+    link.click();
+  }
+
+  volver() { this.router.navigate(['/home']); }
+
+  // Lógica de interacción social
   enviarMensajeForo() {
     if (this.nuevoMensajeForo.trim()) {
       this.comentariosForo.push({
@@ -103,20 +128,13 @@ export class Asignatura implements OnInit {
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TuUser'
       });
       this.nuevoMensajeForo = '';
-      
-      this.scrollChatAlFinal();
     }
   }
 
-  private scrollChatAlFinal() {
-    setTimeout(() => {
-      const chatBox = document.querySelector('.chat-scroll');
-      if (chatBox) {
-        chatBox.scrollTo({
-          top: chatBox.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
-    }, 50);
+  enviarComentarioArchivo(archivo: any) {
+    if (archivo.nuevoComentario.trim()) {
+      archivo.comentariosDestacados.push({ usuario: 'Tú', texto: archivo.nuevoComentario });
+      archivo.nuevoComentario = '';
+    }
   }
 }

@@ -36,21 +36,23 @@
             </button>
           </div>
 
-          <div class="pdf-portrait">
-            <img [src]="archivo.portadaUrl" alt="Portada Real del PDF">
+          <div class="pdf-portrait" (click)="abrirPrevisualizacion(archivo)">
+            <img [src]="archivo.portadaUrl" alt="Portada del PDF">
+            <div class="overlay-zoom">
+              <i class="material-icons">visibility</i>
+              <span>PREVISUALIZAR</span>
+            </div>
           </div>
 
           <div class="info-column">
             <div class="meta-box">
               <span>Publicado por</span>
-              <strong>{{ archivo.autor }}</strong>
-            </div>
+              <strong>{{ archivo.autor }}</strong> </div>
             <div class="meta-box">
               <span>Fecha de subida</span>
-              <strong>{{ archivo.fecha }}</strong>
-            </div>
+              <strong>{{ archivo.fecha }}</strong> </div>
             <div class="author-note-container">
-              <p>{{ archivo.comentarioAutor || 'Sin descripción del autor.' }}</p>
+              <p>{{ archivo.comentarioAutor }}</p>
             </div>
           </div>
         </div>
@@ -64,7 +66,7 @@
             <input 
               type="text" 
               [(ngModel)]="archivo.nuevoComentario" 
-              placeholder="Escribe un comentario sobre este PDF..."
+              placeholder="Añadir comentario..." 
               (keyup.enter)="enviarComentarioArchivo(archivo)">
             <button (click)="enviarComentarioArchivo(archivo)" [disabled]="!archivo.nuevoComentario">
               <i class="material-icons">add_comment</i>
@@ -79,7 +81,7 @@
       <div class="chat-scroll">
         <div class="msg-card" *ngFor="let m of comentariosForo">
           <div class="avatar-sm">
-            <img [src]="m.avatarUrl || 'assets/default-user.png'">
+            <img [src]="m.avatarUrl">
           </div>
           <div class="msg-body">
             <div class="msg-header">
@@ -90,17 +92,33 @@
           </div>
         </div>
       </div>
-
       <div class="forum-input-zone">
         <input 
           type="text" 
           [(ngModel)]="nuevoMensajeForo" 
           (keyup.enter)="enviarMensajeForo()" 
-          placeholder="Pregunta algo al grupo...">
+          placeholder="Escribe al grupo...">
         <button (click)="enviarMensajeForo()" [disabled]="!nuevoMensajeForo">
           <i class="material-icons">send</i>
         </button>
       </div>
     </aside>
+  </div>
+
+  <div class="preview-overlay" *ngIf="archivoSeleccionado" (click)="cerrarPrevisualizacion()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ archivoSeleccionado.nombre }}</h3>
+        <button (click)="cerrarPrevisualizacion()"><i class="material-icons">close</i></button>
+      </div>
+      <div class="modal-body">
+        <iframe [src]="urlPrevisualizacion" frameborder="0"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-dl-hero" (click)="descargarArchivo(archivoSeleccionado)">
+          <i class="material-icons">file_download</i> Descargar para estudiar
+        </button>
+      </div>
+    </div>
   </div>
 </div>
