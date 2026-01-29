@@ -46,3 +46,12 @@ cloudinary:
   cloud_name: delpijtbh
   api_key: "854165385252679"
   api_secret: "Kq2V7UV795av10hdVkD0HtwrXhI"
+
+  server:
+    port: 8080
+    servlet:
+      session:
+        cookie:
+          http-only: true
+          same-site: lax # Vital para que Chrome permita compartir la sesión entre 4200 y 8080
+          path: /

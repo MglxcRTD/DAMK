@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // IMPORTANTE
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -27,7 +28,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // 1. Habilita @PreAuthorize para el AdminController
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -39,53 +40,72 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
 
-                // Persistencia del contexto para mantener la sesión activa
                 .securityContext(context -> context
-                        .securityContextRepository(new DelegatingSecurityContextRepository(
-                                new RequestAttributeSecurityContextRepository(),
-                                new HttpSessionSecurityContextRepository()
-                        ))
+                        .securityContextRepository(securityContextRepository())
                 )
 
-                // Sesión: IF_REQUIRED es correcto para OAuth2 y login por formulario
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        // REGLA 1: Excepciones públicas
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/login/**",
                                 "/oauth2/**",
                                 "/error",
-                                "/api/apuntes/**"
+                                "/api/apuntes/**",
+                                "/ws-damk/**",
+                                "/api/admin/verificaciones/quien-soy"
                         ).permitAll()
 
-                        // 2. Permitimos que los usuarios autenticados creen solicitudes
-                        .requestMatchers("/api/solicitudes/crear").authenticated()
+                        // REGLA 2: Rutas específicas de Usuarios y Amistad (Para evitar el 401)
+                        // IMPORTANTE: .authenticated() permite a cualquier logueado (Admin o Alumno)
+                        .requestMatchers("/api/usuarios/buscar").authenticated()
+                        .requestMatchers("/api/usuarios/todos").authenticated()
+                        .requestMatchers("/api/amistades/**").authenticated()
 
-                        // 3. Los endpoints de /api/admin/** requieren rol ADMIN (reforzado por @PreAuthorize)
+                        // REGLA 3: Restricciones de Perfil y Solicitudes
+                        .requestMatchers("/api/solicitudes/**").authenticated()
+                        .requestMatchers("/api/usuarios/me", "/api/usuarios/upload-pfp", "/api/usuarios/update").authenticated()
+
+                        // REGLA 4: Restricciones por Rol de Administrador
+                        // Usamos hasRole si el String en BD es "ADMIN" (Spring añade ROLE_ automáticamente)
+                        // O usamos hasAuthority si prefieres el String exacto "ROLE_ADMIN"
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        .requestMatchers("/api/usuarios/me", "/api/usuarios/upload-pfp").authenticated()
+                        // Cierre de seguridad
                         .anyRequest().authenticated()
                 )
 
                 .exceptionHandling(e -> e
-                        .defaultAuthenticationEntryPointFor(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                request -> request.getRequestURI().startsWith("/api/")
-                        )
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
 
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
-                        .defaultSuccessUrl("http://localhost:4200/home", true)
+                        .successHandler((request, response, authentication) -> {
+                            securityContextRepository().saveContext(
+                                    org.springframework.security.core.context.SecurityContextHolder.getContext(),
+                                    request,
+                                    response
+                            );
+                            response.sendRedirect("http://localhost:4200/home");
+                        })
                 );
 
         return http.build();
+    }
+
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new DelegatingSecurityContextRepository(
+                new RequestAttributeSecurityContextRepository(),
+                new HttpSessionSecurityContextRepository()
+        );
     }
 
     @Bean
@@ -96,13 +116,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:4200"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin",
+                "Cookie"
+        ));
 
-        // 4. Mantenemos headers permitidos y añadimos X-Requested-With para detectar AJAX
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Cookie"));
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
+        configuration.setExposedHeaders(List.of("Set-Cookie"));
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

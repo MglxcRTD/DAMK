@@ -14,7 +14,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -32,10 +31,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
-        // Manejo específico para GitHub si el email viene vacío
+        // Manejo específico para GitHub si el email viene oculto/privado
         if (email == null) {
             String login = oAuth2User.getAttribute("login");
-            email = login + "@github.com";
+            email = (login != null ? login : oAuth2User.getName()) + "@github.com";
             if(name == null) name = login;
         }
 
@@ -48,9 +47,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             usuario.setEmail(email);
             String baseName = (name != null ? name : email.split("@")[0]);
             usuario.setPassword(null);
-            usuario.setRol(Rol.ALUMNO); // Rol por defecto
+            usuario.setRol(Rol.ALUMNO); // Rol por defecto inicial
 
             String registrationID = userRequest.getClientRegistration().getRegistrationId().toUpperCase();
+
+            // Lógica para evitar duplicados de username
             if(usuarioRepository.existsByUsername(baseName)){
                 usuario.setUsername(baseName + "_" + registrationID);
             } else {
@@ -64,15 +65,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             usuario = usuarioOpt.get();
         }
 
-        // 4. ¡LA CLAVE!: Devolvemos un nuevo usuario que incluye su ROL de la base de datos
-        // Spring Security necesita que el rol tenga el prefijo "ROLE_" para @PreAuthorize
+        // 4. ¡VITAL!: Inyectamos el Rol con el prefijo ROLE_
+        // Esto permite que @PreAuthorize("hasAuthority('ROLE_ADMIN')") funcione.
         String roleName = "ROLE_" + usuario.getRol().name();
 
+        // 5. Devolvemos el usuario con el email como clave de identificación primaria ("email")
         return new DefaultOAuth2User(
                 Collections.singleton(new SimpleGrantedAuthority(roleName)),
                 oAuth2User.getAttributes(),
-                userRequest.getClientRegistration().getProviderDetails()
-                        .getUserInfoEndpoint().getUserNameAttributeName()
+                "email" // <--- Clave para que SolicitudController encuentre al usuario por email
         );
     }
 }

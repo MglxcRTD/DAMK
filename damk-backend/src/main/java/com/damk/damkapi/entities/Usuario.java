@@ -53,6 +53,9 @@ public class Usuario {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String providerId;
 
+    @Column(nullable = false)
+    private boolean verificado = false;
+
     @PrePersist
     protected void onCreate() {
         if (this.fechaCreacion == null) {

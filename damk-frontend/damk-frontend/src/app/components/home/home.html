@@ -18,7 +18,9 @@
     </div>
 
     <div class="nav-right">
-      <button class="action-icon" (click)="irAMensajes()"><i class="material-icons">mail</i></button>
+      <button class="action-icon" (click)="toggleChat()" [class.active]="mostrarChatFlotante">
+        <i class="material-icons">mail</i>
+      </button>
       
       <div class="notification-container">
         <button class="action-icon bell-btn" (click)="toggleNotificaciones()">
@@ -68,7 +70,10 @@
   <div class="main-layout">
     <aside class="sidebar" [class.collapsed]="!sidebarOpen">
       <ul class="nav-list">
-        <li class="active"><i class="material-icons">dashboard</i> <span>Inicio</span></li>
+        <li class="active" (click)="irAInicio()">
+          <i class="material-icons">dashboard</i> 
+          <span>Inicio</span>
+        </li>
         
         <li *ngIf="usuarioActivo?.rol === 'ADMIN'" (click)="irAVerificaciones()" class="admin-nav-item">
           <i class="material-icons">verified_user</i> 
@@ -76,12 +81,12 @@
           <span class="nav-badge" *ngIf="notificaciones.length > 0">{{ notificaciones.length }}</span>
         </li>
 
-        <li><i class="material-icons">description</i> <span>Mis Apuntes</span></li>
-        <li><i class="material-icons">school</i> <span>Profesores</span></li>
-        <li (click)="irAMensajes()"><i class="material-icons">forum</i> <span>Foro de dudas</span></li>
-        <li><i class="material-icons">event</i> <span>Calendario</span></li>
-        <li><i class="material-icons">workspace_premium</i> <span>Logros</span></li>
+        <li>
+          <i class="material-icons">description</i> 
+          <span>Mis Apuntes</span>
+        </li>
       </ul>
+
       <div class="sidebar-bottom">
         <li class="logout-link" (click)="cerrarSesion()">
           <i class="material-icons">logout</i> <span>Cerrar Sesión</span>
@@ -89,20 +94,8 @@
       </div>
     </aside>
 
-    <main class="main-content">
+    <main class="main-content" [class.chat-open]="mostrarChatFlotante">
       <div class="container">
-        
-        <div class="admin-banner" *ngIf="usuarioActivo?.rol === 'ADMIN' && notificaciones.length > 0" (click)="irAVerificaciones()">
-          <div class="banner-icon">
-            <i class="material-icons">admin_panel_settings</i>
-          </div>
-          <div class="banner-text">
-            <h3>Atención Administrador</h3>
-            <p>Tienes solicitudes de profesor pendientes de revisar.</p>
-          </div>
-          <i class="material-icons arrow">chevron_right</i>
-        </div>
-
         <div class="course-selector">
           <button class="btn-course" [class.active]="cursoSeleccionado === 'PRIMERO'" (click)="setCurso('PRIMERO')">PRIMERO</button>
           <button class="btn-course" [class.active]="cursoSeleccionado === 'SEGUNDO'" (click)="setCurso('SEGUNDO')">SEGUNDO</button>
@@ -116,7 +109,6 @@
         </header>
 
         <div class="subjects-grid">
-          
           <ng-container *ngIf="cursoSeleccionado === 'PRIMERO'">
             <div class="subject-card marcas" (click)="verAsignatura('Lenguaje de Marcas')"><span>Lenguaje de Marcas</span></div>
             <div class="subject-card prog" (click)="verAsignatura('Programación')"><span>Programación</span></div>
@@ -134,9 +126,171 @@
             <div class="subject-card digi" (click)="verAsignatura('Digitalización')"><span>Digitalización</span></div>
             <div class="subject-card sge" (click)="verAsignatura('Sistemas de gestión empresarial')"><span>Sistemas de gestión empresarial</span></div>
           </ng-container>
-
         </div>
       </div>
     </main>
+
+    <aside class="chat-sidebar" [class.active]="mostrarChatFlotante">
+      <div class="chat-panel-container">
+        
+        <div class="contacts-wrapper" *ngIf="!chatActivo">
+          <div class="chat-panel-header">
+            <h3>Chat</h3>
+            <div class="header-actions">
+              <button class="add-user-icon" (click)="toggleSolicitudes()" [class.has-pending]="solicitudesPendientes.length > 0">
+                <i class="material-icons">person_outline</i>
+              </button>
+              <button class="add-user-icon" (click)="abrirModalBusqueda()">
+                <i class="material-icons">person_add_alt</i>
+              </button>
+            </div>
+          </div>
+
+          <div class="admin-tabs" *ngIf="usuarioActivo.rol === 'ADMIN'">
+            <button [class.active]="chatTab === 'chats'" (click)="cambiarTabAdmin('chats')">Mis Chats</button>
+            <button [class.active]="chatTab === 'usuarios'" (click)="cambiarTabAdmin('usuarios')">Directorio</button>
+          </div>
+
+          <div class="requests-dropdown glass-card" *ngIf="mostrarSolicitudes">
+            <header>Solicitudes pendientes</header>
+            <div class="requests-list">
+              <div class="request-item" *ngFor="let s of solicitudesPendientes">
+                <span>{{ s.username }}</span>
+                <div class="req-actions">
+                  <button class="btn-accept" (click)="aceptarAmistad(s)"><i class="material-icons">check</i></button>
+                  <button class="btn-reject"><i class="material-icons">close</i></button>
+                </div>
+              </div>
+              <p class="no-requests" *ngIf="solicitudesPendientes.length === 0">No hay solicitudes nuevas</p>
+            </div>
+          </div>
+
+          <div class="search-chat">
+            <i class="material-icons">search</i>
+            <input type="text" placeholder="Filtrar por nombre...">
+          </div>
+
+          <div class="contacts-scroll scroll-area">
+            
+            <ng-container *ngIf="usuarioActivo.rol !== 'ADMIN' || chatTab === 'chats'">
+              <div class="empty-chat-state" *ngIf="contactos.length === 0">
+                <i class="material-icons">forum</i>
+                <p>No tienes chats activos.</p>
+              </div>
+
+              <div class="contact-card support" (click)="abrirChatCon(1)" *ngIf="usuarioActivo.rol !== 'ADMIN'">
+                <div class="avatar-box">
+                  <i class="material-icons">shield</i>
+                  <span class="online-indicator"></span>
+                </div>
+                <div class="contact-details">
+                  <p class="c-name">Soporte Técnico</p>
+                  <p class="c-preview">Chat oficial DAMK</p>
+                </div>
+              </div>
+
+              <div class="contact-card" *ngFor="let c of contactos" (click)="abrirChatCon(c.id)">
+                <div class="avatar-box">
+                  <img [src]="c.avatar || 'assets/default-avatar.png'" alt="avatar">
+                  <span class="online-indicator" *ngIf="c.online"></span>
+                </div>
+                <div class="contact-details">
+                  <p class="c-name">{{ c.username }}</p>
+                  <p class="c-preview">{{ c.ultimoMensaje }}</p>
+                </div>
+              </div>
+            </ng-container>
+
+            <ng-container *ngIf="usuarioActivo.rol === 'ADMIN' && chatTab === 'usuarios'">
+              <div class="contact-card" *ngFor="let u of usuariosSistema" (click)="abrirChatCon(u.id)">
+                <div class="avatar-box">
+                  <div class="mini-avatar-placeholder">{{ u.username.charAt(0).toUpperCase() }}</div>
+                </div>
+                <div class="contact-details">
+                  <p class="c-name">{{ u.username }}</p>
+                  <p class="c-preview">Click para iniciar chat</p>
+                </div>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+
+        <div class="active-chat-wrapper" *ngIf="chatActivo">
+          <div class="active-chat-header">
+            <button class="btn-back-chat" (click)="cerrarConversacion()">
+              <i class="material-icons">arrow_back_ios_new</i>
+            </button>
+            
+            <div class="active-user-info">
+              <span class="active-name">{{ chatActivo.username }}</span>
+              <span class="active-status" *ngIf="chatActivo.online">en línea</span>
+            </div>
+            
+            <button class="close-chat-sidebar" (click)="toggleChat()">
+              <i class="material-icons">close</i>
+            </button>
+          </div>
+
+          <div class="messages-viewport scroll-area" #scrollMe>
+            <div *ngFor="let m of mensajesChat" 
+                 [ngClass]="{'sent-bubble': m.emisorId === usuarioActivo.id, 'received-bubble': m.emisorId !== usuarioActivo.id}"
+                 class="msg-row">
+              <div class="bubble">
+                <p>{{ m.contenido }}</p>
+                <span class="bubble-time">{{ m.timestamp | date:'HH:mm' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="active-chat-footer">
+            <button class="btn-attach"><i class="material-icons">attach_file</i></button>
+            <input type="text" [(ngModel)]="nuevoMensaje" (keyup.enter)="enviarMensajeChat()" placeholder="Escribe un mensaje...">
+            <button class="btn-send" (click)="enviarMensajeChat()" [disabled]="!nuevoMensaje.trim()">
+              <i class="material-icons">send</i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="search-modal-overlay" *ngIf="mostrarModalBusqueda" (click)="cerrarModalBusqueda()">
+    <div class="search-modal glass-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h4>Buscar Compañeros</h4>
+        <button class="close-modal-icon" (click)="cerrarModalBusqueda()">
+          <i class="material-icons">close</i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-search-input">
+          <i class="material-icons">search</i>
+          <input type="text" [(ngModel)]="terminoBusqueda" (input)="buscarUsuariosBD()" placeholder="Escribe al menos 3 letras (ej. herni)...">
+        </div>
+        
+        <div class="search-results scroll-area">
+          <div class="loading-results" *ngIf="buscando">
+            <p>Buscando en la base de datos...</p>
+          </div>
+
+          <p class="empty-search" *ngIf="!buscando && terminoBusqueda.length >= 3 && resultadosBusqueda.length === 0">
+            No se encontraron usuarios con "{{ terminoBusqueda }}"
+          </p>
+
+          <p class="empty-search" *ngIf="terminoBusqueda.length < 3">Escribe al menos 3 letras para buscar...</p>
+
+          <div class="search-item" *ngFor="let user of resultadosBusqueda">
+            <div class="user-info">
+              <div class="mini-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+              <span>{{ user.username }}</span>
+            </div>
+            <button class="btn-add-contact" (click)="enviarSolicitudAmistad(user)">
+              <i class="material-icons">person_add</i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

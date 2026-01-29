@@ -1,17 +1,29 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class Auth {
-  // Definimos las URLs base según la estructura del Backend
+  // URLs base sincronizadas con el Backend
   private API_URL = 'http://localhost:8080/api/auth/';
   private USER_URL = 'http://localhost:8080/api/usuarios/'; 
-  private ADMIN_URL = 'http://localhost:8080/api/admin/verificaciones/';
-  // Nueva ruta para la creación de solicitudes por parte de alumnos
+  // ACTUALIZADO: Ahora cuelga de SOLICITUDES para coincidir con el Controller unificado
   private SOLICITUDES_URL = 'http://localhost:8080/api/solicitudes/';
+  private AMISTADES_URL = 'http://localhost:8080/api/amistades/'; 
+
+  /**
+   * Configuración compartida para peticiones que requieren sesión (Cookies).
+   */
+  private get secureOptions() {
+    return {
+      withCredentials: true,
+      headers: new HttpHeaders({
+        'X-Requested-With': 'XMLHttpRequest'
+      })
+    };
+  }
 
   constructor(private http: HttpClient) { }
   
@@ -20,68 +32,62 @@ export class Auth {
   }
 
   login(credentials: any): Observable<any> {
-    return this.http.post(this.API_URL + 'login', credentials, { 
-      withCredentials: true 
-    });
+    return this.http.post(this.API_URL + 'login', credentials, this.secureOptions);
   }
 
   subirFoto(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post(this.USER_URL + 'upload-pfp', formData, { 
-      withCredentials: true 
-    });
+    return this.http.post(this.USER_URL + 'upload-pfp', formData, this.secureOptions);
   }
 
   getPerfilActual(): Observable<any> {
-    return this.http.get(this.USER_URL + 'me', { 
-      withCredentials: true 
-    });
+    return this.http.get(this.USER_URL + 'me', this.secureOptions);
   }
 
-  // --- MÉTODOS PARA EL FLUJO DE PROFESOR ---
+  // --- NUEVAS FUNCIONES PARA EL CHAT Y AMISTAD ---
 
-  /**
-   * Envía los datos del formulario de solicitud del alumno al nuevo endpoint.
-   */
+  buscarUsuarios(termino: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.USER_URL}buscar?query=${termino}`, this.secureOptions);
+  }
+
+  getTodosLosUsuarios(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.USER_URL}todos`, this.secureOptions);
+  }
+
+  enviarSolicitudAmistad(emisorId: number, receptorId: number): Observable<any> {
+    return this.http.post(this.AMISTADES_URL + 'solicitar', { emisorId, receptorId }, this.secureOptions);
+  }
+
+  // --- FLUJO DE SOLICITUD DE PROFESOR ---
+
   solicitarPuestoProfesor(datos: any): Observable<any> {
-    return this.http.post(this.SOLICITUDES_URL + 'crear', datos, {
-      withCredentials: true
-    });
+    return this.http.post(this.SOLICITUDES_URL + 'crear', datos, this.secureOptions);
   }
 
-  /**
-   * Obtiene el estado de la solicitud del usuario actual para las notificaciones.
-   * Este método es necesario para que el Home reciba el mensaje de aceptación/rechazo.
-   */
   getMiEstadoSolicitud(): Observable<any> {
-    return this.http.get(this.SOLICITUDES_URL + 'me', {
-      withCredentials: true
-    });
+    // Apunta a http://localhost:8080/api/solicitudes/me
+    return this.http.get(this.SOLICITUDES_URL + 'me', this.secureOptions);
   }
 
+  // --- MÉTODOS DE ADMINISTRACIÓN (ACTUALIZADOS PARA EVITAR 404) ---
+
   /**
-   * Obtiene la lista de alumnos que quieren ser profesores (Solo para Admin)
+   * Obtiene la lista de solicitudes de alumnos para ser profesores.
+   * Nueva ruta: /api/solicitudes/admin/pendientes
    */
   getSolicitudesPendientes(): Observable<any[]> {
-    return this.http.get<any[]>(this.ADMIN_URL + 'pendientes', {
-      withCredentials: true
-    });
+    return this.http.get<any[]>(`${this.SOLICITUDES_URL}admin/pendientes`, this.secureOptions);
   }
 
   /**
-   * Acepta o rechaza una solicitud específica (Solo para Admin)
-   * decision: { estado: 'ACEPTADA' | 'RECHAZADA', mensaje: string }
+   * Resuelve una solicitud (ACEPTADA o RECHAZADA)
+   * Nueva ruta: /api/solicitudes/admin/{id}/decidir
    */
   resolverSolicitud(idSolicitud: number, decision: any): Observable<any> {
-    return this.http.post(`${this.ADMIN_URL}${idSolicitud}/decidir`, decision, {
-      withCredentials: true
-    });
+    return this.http.post(`${this.SOLICITUDES_URL}admin/${idSolicitud}/decidir`, decision, this.secureOptions);
   }
 
-  /**
-   * Alias para getPerfilActual usado en la lógica de guardado de sesión
-   */
   getMe(): Observable<any> {
     return this.getPerfilActual();
   }

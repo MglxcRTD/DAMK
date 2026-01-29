@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -94,6 +95,29 @@ public class UsuarioController {
                     usuarioRepository.save(usuario);
                     return ResponseEntity.ok(Map.of("message", "Perfil actualizado correctamente", "user", usuario));
                 }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- NUEVAS FUNCIONALIDADES PARA CHAT Y BÚSQUEDA ---
+
+    /**
+     * Endpoint para buscar usuarios por nombre (LIKE %query%)
+     * Utilizado por el modal de añadir amigos en el frontend.
+     */
+    @GetMapping("/buscar")
+    public ResponseEntity<List<Usuario>> buscarUsuarios(@RequestParam("query") String query) {
+        // Buscamos usuarios cuyo nombre contenga la cadena enviada
+        List<Usuario> resultados = usuarioRepository.findByUsernameContainingIgnoreCase(query);
+        return ResponseEntity.ok(resultados);
+    }
+
+    /**
+     * Endpoint para obtener todos los usuarios del sistema.
+     * Utilizado por el Admin para el Directorio Global.
+     */
+    @GetMapping("/todos")
+    public ResponseEntity<List<Usuario>> obtenerTodosLosUsuarios() {
+        List<Usuario> usuarios = usuarioRepository.findAll();
+        return ResponseEntity.ok(usuarios);
     }
 
     /**
