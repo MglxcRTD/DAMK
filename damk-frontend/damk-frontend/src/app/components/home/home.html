@@ -5,7 +5,7 @@
         <i class="material-icons">menu</i>
       </button>
       <div class="brand-center">
-        <img src="damk logo.png" alt="Logo">
+        <img src="damk logo.png" alt="Logo"> 
         <span class="brand-name">DAMK</span>
       </div>
     </div>
@@ -19,12 +19,43 @@
 
     <div class="nav-right">
       <button class="action-icon" (click)="irAMensajes()"><i class="material-icons">mail</i></button>
-      <button class="action-icon"><i class="material-icons">notifications</i></button>
+      
+      <div class="notification-container">
+        <button class="action-icon bell-btn" (click)="toggleNotificaciones()">
+          <i class="material-icons">notifications</i>
+          <span class="badge-count" *ngIf="notificaciones.length > 0">
+            {{ notificaciones.length > 9 ? '+9' : notificaciones.length }}
+          </span>
+        </button>
+
+        <div class="notis-dropdown glass-card" *ngIf="mostrarListaNotis">
+          <header>
+            <h4>Notificaciones</h4>
+            <span class="count-tag" *ngIf="notificaciones.length > 0">{{ notificaciones.length }} nuevas</span>
+          </header>
+
+          <div class="notis-list scroll-area">
+            <div *ngIf="notificaciones.length === 0" class="empty-notis">
+              <i class="material-icons">notifications_none</i>
+              <p>No tienes avisos nuevos</p>
+            </div>
+
+            <div class="noti-item" *ngFor="let n of notificaciones" (click)="clickNotificacion(n)">
+              <div class="noti-icon" [ngClass]="n.tipo">
+                <i class="material-icons">{{ n.icono }}</i>
+              </div>
+              <div class="noti-content">
+                <p class="noti-title">{{ n.titulo }}</p>
+                <p class="noti-desc">{{ n.descripcion }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <div class="user-profile" (click)="irAPerfil()">
         <div class="user-text">
           <span class="name">{{ usuarioActivo.username }}</span>
-          <span class="rank">{{ usuarioActivo.puntosReputacion }} pts</span>
         </div>
         <div class="avatar-circle">
           <img *ngIf="usuarioActivo.avatarUrl" [src]="usuarioActivo.avatarUrl" class="avatar-img-nav">
@@ -38,6 +69,13 @@
     <aside class="sidebar" [class.collapsed]="!sidebarOpen">
       <ul class="nav-list">
         <li class="active"><i class="material-icons">dashboard</i> <span>Inicio</span></li>
+        
+        <li *ngIf="usuarioActivo?.rol === 'ADMIN'" (click)="irAVerificaciones()" class="admin-nav-item">
+          <i class="material-icons">verified_user</i> 
+          <span>Verificaciones</span>
+          <span class="nav-badge" *ngIf="notificaciones.length > 0">{{ notificaciones.length }}</span>
+        </li>
+
         <li><i class="material-icons">description</i> <span>Mis Apuntes</span></li>
         <li><i class="material-icons">school</i> <span>Profesores</span></li>
         <li (click)="irAMensajes()"><i class="material-icons">forum</i> <span>Foro de dudas</span></li>
@@ -53,6 +91,18 @@
 
     <main class="main-content">
       <div class="container">
+        
+        <div class="admin-banner" *ngIf="usuarioActivo?.rol === 'ADMIN' && notificaciones.length > 0" (click)="irAVerificaciones()">
+          <div class="banner-icon">
+            <i class="material-icons">admin_panel_settings</i>
+          </div>
+          <div class="banner-text">
+            <h3>Atención Administrador</h3>
+            <p>Tienes solicitudes de profesor pendientes de revisar.</p>
+          </div>
+          <i class="material-icons arrow">chevron_right</i>
+        </div>
+
         <div class="course-selector">
           <button class="btn-course" [class.active]="cursoSeleccionado === 'PRIMERO'" (click)="setCurso('PRIMERO')">PRIMERO</button>
           <button class="btn-course" [class.active]="cursoSeleccionado === 'SEGUNDO'" (click)="setCurso('SEGUNDO')">SEGUNDO</button>
@@ -61,17 +111,30 @@
         <header class="welcome-section">
           <div class="welcome-text">
             <h2>¡Hola de nuevo, {{ usuarioActivo.username }}!</h2>
-            <p>Selecciona una asignatura para empezar a estudiar.</p>
+            <p>Estás viendo las asignaturas de <b>{{ cursoSeleccionado }}</b>:</p>
           </div>
         </header>
 
         <div class="subjects-grid">
-          <div class="subject-card marcas" (click)="verAsignatura('Lenguaje de Marcas')"><span>Lenguaje de Marcas</span></div>
-          <div class="subject-card prog" (click)="verAsignatura('Programación')"><span>Programación</span></div>
-          <div class="subject-card sistemas" (click)="verAsignatura('Sistemas Informáticos')"><span>Sistemas Informáticos</span></div>
-          <div class="subject-card cloud" (click)="verAsignatura('Cloud Computing')"><span>Cloud Computing</span></div>
-          <div class="subject-card bd" (click)="verAsignatura('Base de Datos')"><span>Base de Datos</span></div>
-          <div class="subject-card entornos" (click)="verAsignatura('Entornos de Desarrollo')"><span>Entornos de Desarrollo</span></div>
+          
+          <ng-container *ngIf="cursoSeleccionado === 'PRIMERO'">
+            <div class="subject-card marcas" (click)="verAsignatura('Lenguaje de Marcas')"><span>Lenguaje de Marcas</span></div>
+            <div class="subject-card prog" (click)="verAsignatura('Programación')"><span>Programación</span></div>
+            <div class="subject-card sistemas" (click)="verAsignatura('Sistemas Informáticos')"><span>Sistemas Informáticos</span></div>
+            <div class="subject-card cloud" (click)="verAsignatura('Cloud Computing')"><span>Cloud Computing</span></div>
+            <div class="subject-card bd" (click)="verAsignatura('Base de Datos')"><span>Base de Datos</span></div>
+            <div class="subject-card entornos" (click)="verAsignatura('Entornos de Desarrollo')"><span>Entornos de Desarrollo</span></div>
+          </ng-container>
+
+          <ng-container *ngIf="cursoSeleccionado === 'SEGUNDO'">
+            <div class="subject-card ad" (click)="verAsignatura('Acceso a Datos')"><span>Acceso a Datos</span></div>
+            <div class="subject-card psp" (click)="verAsignatura('Programación de Servicios y Procesos')"><span>Programación de Servicios y Procesos</span></div>
+            <div class="subject-card pmdm" (click)="verAsignatura('Programación multimedia y dispositivos móviles')"><span>Programación multimedia y dispositivos móviles</span></div>
+            <div class="subject-card di" (click)="verAsignatura('Desarrollo de Interfaces')"><span>Desarrollo de Interfaces</span></div>
+            <div class="subject-card digi" (click)="verAsignatura('Digitalización')"><span>Digitalización</span></div>
+            <div class="subject-card sge" (click)="verAsignatura('Sistemas de gestión empresarial')"><span>Sistemas de gestión empresarial</span></div>
+          </ng-container>
+
         </div>
       </div>
     </main>

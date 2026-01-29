@@ -1,90 +1,212 @@
 <div class="perfil-container">
-  <div class="container-inner">
-    <header class="perfil-header">
-      <button class="btn-back" (click)="irAHome()">
-        <i class="material-icons">arrow_back</i>
-      </button>
-      <h1>Configuración</h1>
-    </header>
-
-    <main class="perfil-card">
-      <div class="avatar-wrapper">
-        <input type="file" #fotoInput (change)="onFileSelected($event)" accept="image/*" style="display: none">
-        <div class="main-avatar" (click)="fotoInput.click()">
-          <img *ngIf="previsualizacionFoto" [src]="previsualizacionFoto" class="img-avatar">
-          <img *ngIf="!previsualizacionFoto && usuario?.avatarUrl" [src]="usuario.avatarUrl" class="img-avatar">
-          <div *ngIf="!previsualizacionFoto && !usuario?.avatarUrl" class="avatar-pato-default">
-            <i class="material-icons">account_circle</i>
-          </div>
-        </div>
-      </div>
-
-      <div class="user-details">
-        <h2>{{ usuario?.username || 'Cargando...' }}</h2>
-        <span class="email">{{ usuario?.email }}</span>
-        <div class="stats-row">
-          <div class="stat">
-            <span class="value">{{ usuario?.puntosReputacion || 0 }}</span>
-            <span class="label">Puntos</span>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <section class="config-grid">
-      <div class="config-card" (click)="abrirAjustesCuenta()">
-        <i class="material-icons">manage_accounts</i>
-        <div class="text-wrapper">
-          <span>Ajustes de Cuenta</span>
-          <small>Username, Email y Password</small>
-        </div>
-      </div>
-
-      <div class="config-card" (click)="toggleTheme()">
-        <i class="material-icons">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</i>
-        <div class="text-wrapper">
-          <span>Apariencia</span>
-          <small>Modo: {{ isDarkMode ? 'Oscuro' : 'Claro' }}</small>
-        </div>
-      </div>
-
-      <div class="config-card logout" (click)="cerrarSesion()">
-        <i class="material-icons">logout</i>
-        <div class="text-wrapper">
-          <span>Cerrar Sesión</span>
-          <small>Salir de DAMK</small>
-        </div>
-      </div>
-    </section>
+  
+  <div *ngIf="mensajeFeedback" class="toast" [ngClass]="mensajeFeedback.tipo">
+    <i class="material-icons">{{ mensajeFeedback.tipo === 'exito' ? 'check_circle' : 'error' }}</i>
+    <span>{{ mensajeFeedback.texto }}</span>
   </div>
 
-  <div class="modal-overlay" *ngIf="editando" (click)="editando = false">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>Ajustes de Cuenta</h3>
-        <button class="btn-close" (click)="editando = false"><i class="material-icons">close</i></button>
+  <div class="container-inner">
+    
+    <header class="perfil-header">
+      <button class="btn-back" (click)="irAHome()" title="Volver al Inicio">
+        <i class="material-icons">arrow_back</i>
+      </button>
+      <div class="header-text">
+        <h1>Centro de Control</h1>
+        <p>Gestiona tu identidad y preferencias en DAMK</p>
       </div>
+    </header>
+
+    <div class="main-profile-layout">
       
-      <div class="modal-body">
-        <div class="input-group">
-          <label>Usuario</label>
-          <input [(ngModel)]="usuarioEdit.username" type="text" placeholder="Tu nombre">
+      <aside class="identity-section">
+        <div class="glass-card identity-card">
+          <div class="avatar-container">
+            <input type="file" #fotoInput (change)="onFileSelected($event)" accept="image/*" style="display: none">
+            
+            <div class="avatar-ring" (click)="fotoInput.click()">
+              <div class="avatar-inner">
+                <img *ngIf="previsualizacionFoto || usuario?.avatarUrl" 
+                     [src]="previsualizacionFoto || usuario.avatarUrl" 
+                     class="img-avatar">
+                
+                <div *ngIf="!previsualizacionFoto && !usuario?.avatarUrl" class="messenger-mock-gold">
+                  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="35" r="20" />
+                    <path d="M20,85 C20,60 80,60 80,85 L80,95 L20,95 Z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="user-info-text">
+            <div class="edit-camera-wrap" (click)="fotoInput.click()" title="Cambiar foto de perfil">
+              <i class="material-icons">photo_camera</i>
+            </div>
+
+            <h2>{{ usuario?.username }}</h2>
+            <div class="badge-row">
+              <span class="status-online">En línea</span>
+            </div>
+          </div>
+
+          <div class="identity-footer">
+            <div class="stat-item">
+              <span class="stat-value">{{ usuario?.fechaCreacion ? (usuario.fechaCreacion | date:'MMM yyyy') : '---' }}</span>
+              <span class="stat-label">Desde</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-value">{{ usuario?.rol || 'Usuario' }}</span>
+              <span class="stat-label">Rol</span>
+            </div>
+          </div>
         </div>
-        <div class="input-group">
-          <label>Email</label>
-          <input [(ngModel)]="usuarioEdit.email" type="email" placeholder="pato@ejemplo.com">
+      </aside>
+
+      <main class="options-section">
+        
+        <div class="glass-card verify-card" *ngIf="usuario?.rol !== 'PROFESOR' && usuario?.rol !== 'ADMIN'">
+          <div class="verify-content">
+            <div class="icon-box-premium gold">
+              <i class="material-icons">workspace_premium</i>
+            </div>
+            <div class="verify-text">
+              <h3>Verificación de Profesor</h3>
+              <p>Obtén el check dorado y sube materiales oficiales verificados.</p>
+            </div>
+          </div>
+          <button class="btn-verify-action" (click)="abrirModalProfesor()">SOLICITAR AHORA</button>
         </div>
-        <div class="input-group">
+
+        <div class="settings-grid-premium">
+          <div class="option-item glass-card" (click)="abrirAjustesCuenta()">
+            <div class="icon-wrap"><i class="material-icons">settings</i></div>
+            <div class="info-wrap">
+              <strong>Ajustes de cuenta</strong>
+              <small>Seguridad y privacidad</small>
+            </div>
+            <i class="material-icons arrow">chevron_right</i>
+          </div>
+
+          <div class="option-item glass-card" (click)="toggleTheme()">
+            <div class="icon-wrap"><i class="material-icons">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</i></div>
+            <div class="info-wrap">
+              <strong>Apariencia</strong>
+              <small>Modo {{ isDarkMode ? 'Oscuro' : 'Claro' }}</small>
+            </div>
+            <div class="theme-indicator" [class.dark]="isDarkMode"></div>
+          </div>
+
+          <div class="option-item glass-card logout-item" (click)="cerrarSesion()">
+            <div class="icon-wrap"><i class="material-icons">power_settings_new</i></div>
+            <div class="info-wrap">
+              <strong>Cerrar Sesión</strong>
+              <small>Desconectar de este equipo</small>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-overlay-new" *ngIf="editando" (click)="editando = false">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+      <div class="modal-glow"></div>
+      <header>
+        <h3>Editar Perfil</h3>
+        <button (click)="editando = false"><i class="material-icons">close</i></button>
+      </header>
+      
+      <div class="modal-body-scroll">
+        <div class="premium-input">
+          <label>Nombre de Usuario</label>
+          <div class="input-container">
+            <i class="material-icons">person</i>
+            <input [(ngModel)]="usuarioEdit.username" type="text">
+          </div>
+        </div>
+
+        <div class="premium-input">
+          <label>Email Corporativo</label>
+          <div class="input-container">
+            <i class="material-icons">alternate_email</i>
+            <input [(ngModel)]="usuarioEdit.email" type="email">
+          </div>
+        </div>
+
+        <div class="premium-input">
           <label>Nueva Contraseña</label>
-          <input [(ngModel)]="usuarioEdit.password" type="password" placeholder="••••••••">
-          <small class="helper-text">Mínimo 8 caracteres para mayor seguridad.</small>
+          <div class="input-container">
+            <i class="material-icons">lock</i>
+            <input [(ngModel)]="usuarioEdit.password" type="password" placeholder="Dejar en blanco para mantener">
+          </div>
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button class="btn-cancel" (click)="editando = false">Cancelar</button>
-        <button class="btn-save" (click)="guardarCambios()">Guardar</button>
+      <footer>
+        <button class="btn-cancel-new" (click)="editando = false">Descartar</button>
+        <button class="btn-save-new" (click)="guardarCambios()">Guardar Cambios</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal-overlay-new" *ngIf="modalProfesorAbierto" (click)="modalProfesorAbierto = false">
+    <div class="modal-panel verify-form-modal" (click)="$event.stopPropagation()">
+      <div class="modal-glow"></div>
+      <header>
+        <div class="header-with-icon">
+          <i class="material-icons gold-icon">workspace_premium</i>
+          <h3>Verificación Docente</h3>
+        </div>
+        <button (click)="modalProfesorAbierto = false"><i class="material-icons">close</i></button>
+      </header>
+
+      <p class="modal-intro">Completa tus datos profesionales para que el equipo de administración verifique tu cuenta.</p>
+      
+      <div class="modal-body-scroll">
+        <div class="premium-input">
+          <label>Nombre</label>
+          <div class="input-container">
+            <i class="material-icons">badge</i>
+            <input [(ngModel)]="solicitudProfesor.nombre" type="text" placeholder="Tu nombre real">
+          </div>
+        </div>
+
+        <div class="premium-input">
+          <label>Apellidos</label>
+          <div class="input-container">
+            <i class="material-icons">person_outline</i>
+            <input [(ngModel)]="solicitudProfesor.apellidos" type="text" placeholder="Tus apellidos">
+          </div>
+        </div>
+
+        <div class="premium-input">
+          <label>Centro de Trabajo / Instituto</label>
+          <div class="input-container">
+            <i class="material-icons">school</i>
+            <input [(ngModel)]="solicitudProfesor.centroTrabajo" type="text" placeholder="Ej: IES Juan de la Cierva">
+          </div>
+        </div>
+
+        <div class="premium-input">
+          <label>Perfil LinkedIn (Opcional)</label>
+          <div class="input-container">
+            <i class="material-icons">link</i>
+            <input [(ngModel)]="solicitudProfesor.linkedIn" type="text" placeholder="url.linkedin.com/in/tu-perfil">
+          </div>
+        </div>
       </div>
+
+      <footer>
+        <button class="btn-cancel-new" (click)="modalProfesorAbierto = false">Cancelar</button>
+        <button class="btn-save-new" (click)="enviarSolicitudVerificacion()" 
+                [disabled]="!solicitudProfesor.nombre || !solicitudProfesor.apellidos || !solicitudProfesor.centroTrabajo">
+          Enviar Solicitud
+        </button>
+      </footer>
     </div>
   </div>
 </div>

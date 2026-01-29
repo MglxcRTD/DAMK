@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { Auth } from '../../services/auth'; 
 
 @Component({
   selector: 'app-perfil',
@@ -12,51 +13,112 @@ export class Perfil implements OnInit {
   usuario: any = null; 
   isDarkMode: boolean = false;
   previsualizacionFoto: string | ArrayBuffer | null = null;
-
-  // Estados para el Modal Senior
   editando: boolean = false;
-  usuarioEdit: any = {}; // Copia de trabajo para el formulario
+  usuarioEdit: any = {}; 
 
-  constructor(private router: Router) {}
+  // Feedback visual (Toast)
+  mensajeFeedback: { texto: string, tipo: 'exito' | 'error' } | null = null;
+
+  modalProfesorAbierto: boolean = false;
+  solicitudProfesor = { nombre: '', apellidos: '', centroTrabajo: '', linkedIn: '' };
+
+  constructor(
+    private router: Router, 
+    private cdr: ChangeDetectorRef,
+    private authService: Auth 
+  ) {}
 
   ngOnInit() {
-    this.obtenerUsuarioLogueado();
+    this.cargarDatosUsuario();
     this.isDarkMode = localStorage.getItem('theme') === 'dark';
     this.aplicarTema();
   }
 
-  obtenerUsuarioLogueado() {
+  /**
+   * Muestra una notificación temporal en pantalla
+   */
+  mostrarFeedback(texto: string, tipo: 'exito' | 'error') {
+    this.mensajeFeedback = { texto, tipo };
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.mensajeFeedback = null;
+      this.cdr.detectChanges();
+    }, 3000);
+  }
+
+  cargarDatosUsuario() {
     const userJson = localStorage.getItem('usuario');
     if (userJson) {
       this.usuario = JSON.parse(userJson);
+      
+      this.authService.getPerfilActual().subscribe({
+        next: (usuarioDB) => {
+          this.usuario = usuarioDB;
+          localStorage.setItem('usuario', JSON.stringify(usuarioDB));
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error("Error al sincronizar con la DB", err);
+          if (err.status === 401) {
+            this.forzarReLogin();
+          }
+        }
+      });
     } else {
       this.router.navigate(['/login']);
     }
   }
 
-  // --- GESTIÓN DE AJUSTES (MODAL) ---
+  // --- GESTIÓN DE LA FOTO DE PERFIL (CLOUDINARY) ---
+
+  onFileSelected(event: any) {
+    const file: File = event.target.files[0];
+    if (file && this.usuario) {
+      const reader = new FileReader();
+      reader.onload = () => { this.previsualizacionFoto = reader.result; };
+      reader.readAsDataURL(file);
+
+      this.authService.subirFoto(file).subscribe({
+        next: (res) => {
+          this.usuario.avatarUrl = res.avatarUrl;
+          localStorage.setItem('usuario', JSON.stringify(this.usuario));
+          this.mostrarFeedback("Foto de perfil actualizada con éxito", "exito");
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error("Error al subir la foto", err);
+          if (err.status === 401) {
+            this.forzarReLogin();
+          } else {
+            this.mostrarFeedback("No se pudo guardar la foto", "error");
+            this.previsualizacionFoto = null;
+          }
+        }
+      });
+    }
+  }
+
+  // --- GESTIÓN DE AJUSTES DE CUENTA ---
   
   abrirAjustesCuenta() {
-    // Senior tip: Clonamos el objeto para no editar el original por referencia
-    this.usuarioEdit = { 
-      ...this.usuario,
-      password: '' // No mostramos la contraseña actual por seguridad
-    };
+    this.usuarioEdit = { ...this.usuario, password: '' };
     this.editando = true;
   }
 
   guardarCambios() {
-    console.log("Sincronizando con Spring Boot...", this.usuarioEdit);
-    
-    // 1. Aquí llamarías a tu UsuarioService.update(this.usuarioEdit)
-    // 2. Simulamos éxito:
+    // Nota: Aquí se implementaría el método PUT real en el servicio si fuera necesario
     this.usuario = { ...this.usuarioEdit };
-    delete this.usuario.password; // No guardamos el pass plano en el state local
-    
+    delete this.usuario.password; 
     localStorage.setItem('usuario', JSON.stringify(this.usuario));
     this.editando = false;
-    
-    // Podrías añadir una notificación de éxito aquí
+    this.mostrarFeedback("Perfil actualizado correctamente", "exito");
+  }
+
+  // --- MÉTODOS DE APOYO ---
+
+  private forzarReLogin() {
+    localStorage.clear();
+    this.router.navigate(['/login']);
   }
 
   cancelarEdicion() {
@@ -64,7 +126,38 @@ export class Perfil implements OnInit {
     this.usuarioEdit = {};
   }
 
-  // --- UI & THEME ---
+  abrirModalProfesor() {
+    this.modalProfesorAbierto = true;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * FLUJO DE VERIFICACIÓN:
+   * Envía la solicitud al backend y gestiona la respuesta con Toast.
+   */
+  enviarSolicitudVerificacion() {
+    if (!this.solicitudProfesor.nombre || !this.solicitudProfesor.apellidos || !this.solicitudProfesor.centroTrabajo) {
+      this.mostrarFeedback("Por favor, completa los campos obligatorios", "error");
+      return;
+    }
+
+    this.authService.solicitarPuestoProfesor(this.solicitudProfesor).subscribe({
+      next: (res) => {
+        this.mostrarFeedback("¡Solicitud enviada! La revisaremos pronto", "exito");
+        this.modalProfesorAbierto = false;
+        this.solicitudProfesor = { nombre: '', apellidos: '', centroTrabajo: '', linkedIn: '' };
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error("Error al enviar la solicitud de profesor", err);
+        if (err.status === 401) {
+          this.forzarReLogin();
+        } else {
+          this.mostrarFeedback("Error al enviar la solicitud", "error");
+        }
+      }
+    });
+  }
 
   toggleTheme() {
     this.isDarkMode = !this.isDarkMode;
@@ -76,22 +169,9 @@ export class Perfil implements OnInit {
     document.body.classList.toggle('dark-theme', this.isDarkMode);
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.previsualizacionFoto = reader.result;
-        // Senior tip: Aquí enviarías el FormData al servidor inmediatamente
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
   irAHome() { this.router.navigate(['/home']); }
 
   cerrarSesion() {
-    localStorage.removeItem('usuario');
-    this.router.navigate(['/login']);
+    this.forzarReLogin();
   }
 }

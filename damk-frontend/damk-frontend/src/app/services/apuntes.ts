@@ -1,22 +1,37 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApuntesService {
-  private http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:8080/api/apuntes';
+  // Asegúrate de que en environment.ts la url sea http://localhost:8080/api
+  private apiUrl = `${environment.apiUrl}/apuntes`;
 
-  async subirApunte(file: File, asignatura: string) {
-    // Creamos un formulario virtual para enviar el archivo real a Java
+  constructor(private http: HttpClient) {}
+
+  /**
+   * Sube el archivo binario junto con los metadatos necesarios para Cloudinary
+   */
+  subirApunte(file: File, titulo: string, asignatura: string, curso: string, usuarioId: number): Observable<any> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', file); // El archivo PDF de 1.27MB
+    formData.append('titulo', titulo);
     formData.append('asignatura', asignatura);
-    formData.append('titulo', file.name);
+    formData.append('curso', curso);
+    formData.append('usuarioId', usuarioId.toString());
 
-    // Lo enviamos directamente a tu Spring Boot
-    return firstValueFrom(this.http.post(`${this.API_URL}/subir`, formData));
+    return this.http.post(`${this.apiUrl}/subir`, formData);
+  }
+
+  /**
+   * Obtiene la lista de apuntes filtrada por asignatura directamente desde MySQL
+   */
+  getApuntesPorAsignatura(asignatura: string): Observable<any[]> {
+    // Usamos encodeURIComponent por si la asignatura tiene espacios o tildes
+    const asignaturaSafe = encodeURIComponent(asignatura);
+    return this.http.get<any[]>(`${this.apiUrl}/${asignaturaSafe}`);
   }
 }

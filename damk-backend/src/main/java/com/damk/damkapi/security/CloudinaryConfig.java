@@ -21,9 +21,10 @@ public class CloudinaryConfig {
     @Bean
     public Cloudinary cloudinary() {
         return new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", cloudName, // Antes tenías "cloud-name"
-                "api_key", apiKey,     // Antes tenías "api-key"
-                "api_secret", apiSecret  // Antes tenías "api-secret"
+                "cloud_name", cloudName,
+                "api_key", apiKey,
+                "api_secret", apiSecret,
+                "secure", true // Recomendado para evitar problemas de contenido mixto (HTTPS)
         ));
     }
 }

@@ -5,6 +5,9 @@ import { Home } from './components/home/home';
 import { Login } from './components/login/login';
 import { Asignatura } from './components/asignatura/asignatura';
 import { Perfil } from './components/perfil/perfil';
+import { Verificaciones } from './components/admin/verificaciones/verificaciones'; 
+// 1. Importamos el Guard que creaste en la terminal
+import { AdminGuard } from './guards/admin-guard';
 
 const routes: Routes = [
   { path: 'registro', component: Registro },
@@ -12,6 +15,14 @@ const routes: Routes = [
   { path: 'home', component: Home },
   { path: 'asignatura/:nombre', component: Asignatura },
   { path: 'perfil', component: Perfil },
+  
+  // 2. Protegemos la ruta con el Guard
+  { 
+    path: 'admin/verificaciones', 
+    component: Verificaciones,
+    canActivate: [AdminGuard] 
+  },
+
   { path: '', redirectTo: '/login', pathMatch: 'full' }, 
   { path: '**', redirectTo: '/login' } 
 ];

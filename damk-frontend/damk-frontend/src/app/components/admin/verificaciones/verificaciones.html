@@ -1,0 +1,68 @@
+<div class="admin-panel">
+  <div *ngIf="mensajeFeedback" class="toast" [ngClass]="mensajeFeedback.tipo">
+    <i class="material-icons">{{ mensajeFeedback.tipo === 'exito' ? 'check_circle' : 'error' }}</i>
+    <span>{{ mensajeFeedback.texto }}</span>
+  </div>
+
+  <div class="top-actions">
+    <button class="btn-back" (click)="volver()">
+      <i class="material-icons">arrow_back</i>
+      <span>Volver al Inicio</span>
+    </button>
+  </div>
+
+  <div class="header">
+    <h2><i class="material-icons">verified_user</i> Verificaciones Pendientes</h2>
+    <p>Revisa la información de los usuarios que solicitan el rol de <b>Profesor</b>.</p>
+  </div>
+
+  <div *ngIf="cargando" class="status-container">
+    <div class="spinner"></div>
+    <p>Buscando solicitudes en el servidor...</p>
+  </div>
+
+  <div *ngIf="!cargando && solicitudes.length === 0" class="empty-state">
+    <div class="icon-circle"><i class="material-icons">check_circle_outline</i></div>
+    <h3>¡Todo al día!</h3>
+    <p>No hay ninguna solicitud de profesor pendiente.</p>
+  </div>
+
+  <div class="grid" *ngIf="!cargando && solicitudes.length > 0">
+    <div class="card" *ngFor="let s of solicitudes">
+      <div class="card-header">
+        <img [src]="s.usuario.avatarUrl || 'https://ui-avatars.com/api/?name=' + s.nombre + '+' + s.apellidos + '&background=FFD200&color=fff'" class="mini-avatar">
+        <div class="user-meta">
+          <h3>{{ s.nombre }} {{ s.apellidos }}</h3>
+          <span>{{ s.usuario.email }}</span>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <p><strong>Centro de Trabajo:</strong> {{ s.centroTrabajo }}</p>
+        <p><strong>LinkedIn:</strong> 
+          <a [href]="s.linkedIn" target="_blank" class="linkedin-link">
+            Ver perfil profesional <i class="material-icons">open_in_new</i>
+          </a>
+        </p>
+        <small class="date">Solicitado el: {{ s.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}</small>
+      </div>
+
+      <div class="card-actions" *ngIf="solicitudRechazadaId !== s.id">
+        <button class="btn-approve" (click)="gestionar(s.id, 'ACEPTADA')">
+          <i class="material-icons">done</i> Aceptar
+        </button>
+        <button class="btn-reject" (click)="gestionar(s.id, 'RECHAZADA')">
+          <i class="material-icons">close</i> Rechazar
+        </button>
+      </div>
+
+      <div class="reject-area" *ngIf="solicitudRechazadaId === s.id">
+        <textarea [(ngModel)]="motivoRechazo" placeholder="Escribe el motivo del rechazo..."></textarea>
+        <div class="reject-buttons">
+          <button class="btn-confirm-reject" (click)="confirmarRechazo()">Confirmar Rechazo</button>
+          <button class="btn-cancel" (click)="cancelarRechazo()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

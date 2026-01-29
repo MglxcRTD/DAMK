@@ -1,0 +1,153 @@
+// Variables locales (DAMK Colors)
+$amarillo-pato: #FFD200;
+$naranja-pico: #FF8C00;
+$pato-red: #ff4757;
+$pato-green: #2ecc71;
+
+.admin-panel {
+  padding: 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+  position: relative;
+
+  .toast {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    z-index: 9999;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    &.exito { background: $pato-green; }
+    &.error { background: $pato-red; }
+    i { font-size: 24px; }
+  }
+
+  .top-actions {
+    margin-bottom: 30px;
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: white;
+      border: 2px solid #eee;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #2d3436;
+      transition: all 0.3s ease;
+      i { font-size: 20px; transition: transform 0.3s ease; }
+      &:hover {
+        border-color: $amarillo-pato;
+        background: rgba($amarillo-pato, 0.05);
+        transform: translateX(-5px);
+        i { transform: translateX(-3px); }
+      }
+    }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; // Asegura que nada sobresalga de la tarjeta
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      .mini-avatar {
+        width: 55px; height: 55px;
+        border-radius: 50%; object-fit: cover;
+        border: 2px solid $amarillo-pato;
+      }
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+      button {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        gap: 8px; padding: 10px; border: none; border-radius: 10px;
+        font-weight: 700; cursor: pointer; transition: 0.2s;
+      }
+      .btn-approve { background: rgba($pato-green, 0.1); color: $pato-green; &:hover { background: $pato-green; color: white; } }
+      .btn-reject { background: rgba($pato-red, 0.1); color: $pato-red; &:hover { background: $pato-red; color: white; } }
+    }
+
+    /* --- ÁREA DE RECHAZO: UNIFORME Y SIN DESBORDAMIENTO --- */
+    .reject-area {
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 16px;
+      animation: fadeIn 0.3s ease;
+      box-sizing: border-box; // Mantiene el padding dentro del ancho del contenedor
+      width: 100%;
+
+      textarea {
+        all: unset !important; 
+        display: block !important;
+        width: 100% !important; // Ocupa el 100% del contenedor padre
+        box-sizing: border-box !important; // Crucial para la uniformidad
+        
+        height: 50px !important;
+        padding: 5px 0 !important;
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 2px solid #eee !important;
+        
+        font-family: inherit !important;
+        font-size: 0.9rem !important;
+        line-height: 1.4 !important;
+        color: #2d3436 !important;
+        transition: all 0.3s ease !important;
+        
+        &:focus {
+          outline: none !important;
+          border-bottom-color: $pato-red !important;
+          box-shadow: none !important; 
+        }
+
+        &::placeholder { color: #b2bec3; font-style: italic; }
+      }
+
+      .reject-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        button {
+          flex: 1; padding: 10px; font-size: 0.85rem; font-weight: 800;
+          border-radius: 12px; cursor: pointer; border: none;
+        }
+        .btn-confirm-reject { background: $pato-red; color: white; }
+        .btn-cancel { background: white; color: #636e72; border: 1px solid #eee; }
+      }
+    }
+  }
+}
+
+// Animaciones
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

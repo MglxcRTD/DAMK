@@ -17,6 +17,7 @@ import { Perfil } from './components/perfil/perfil';
 
 // Servicios
 import { ApuntesService } from './services/apuntes';
+import { Verificaciones } from './components/admin/verificaciones/verificaciones';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { ApuntesService } from './services/apuntes';
     Home,
     Login,
     Asignatura,
-    Perfil
+    Perfil,
+    Verificaciones
   ],
   imports: [
     BrowserModule,

@@ -1,10 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import * as pdfjsLib from 'pdfjs-dist';
+import { ApuntesService } from '../../services/apuntes';
+import { Subscription } from 'rxjs';
 
-// Configuración del worker necesaria para renderizar el PDF en el navegador
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+interface ApunteDB {
+  id: number;
+  titulo: string;
+  asignatura: string;
+  curso: string;
+  urlCloudinary: string;
+  estado: string;
+  fechaSubida: string;
+  autor?: { nombre: string };
+}
+
+(pdfjsLib as any).GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 @Component({
   selector: 'app-asignatura',
@@ -12,16 +24,24 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
   templateUrl: './asignatura.html',
   styleUrl: './asignatura.scss'
 })
-export class Asignatura implements OnInit {
-  nombreAsignatura: string = '';
-  listaArchivos: any[] = [];
-  nuevoMensajeForo: string = '';
-  
-  // Control de la ventana emergente de previsualización
-  archivoSeleccionado: any = null;
-  urlPrevisualizacion: SafeResourceUrl | null = null;
+export class Asignatura implements OnInit, OnDestroy {
+  public nombreAsignatura: string = '';
+  public cursoActual: string = '1º'; 
+  public listaArchivos: any[] = [];
+  public nuevoMensajeForo: string = '';
+  public archivoSeleccionado: any = null;
+  public urlPrevisualizacion: SafeResourceUrl | null = null;
+  private subscripcionApuntes: Subscription | null = null;
 
-  comentariosForo: any[] = [
+  // --- NUEVAS VARIABLES PARA EL FORMULARIO DE SUBIDA ---
+  public modalSubidaAbierto: boolean = false;
+  public datosSubida = {
+    archivo: null as File | null,
+    titulo: '',
+    comentario: ''
+  };
+
+  public comentariosForo: any[] = [
     { usuario: 'Pato_DAM', texto: '¿Alguien tiene el PDF de la intro?', fecha: '12:30', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pato' },
     { usuario: 'Admin', texto: 'Ya está verificado en la lista.', fecha: '12:45', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' }
   ];
@@ -29,112 +49,179 @@ export class Asignatura implements OnInit {
   constructor(
     private route: ActivatedRoute, 
     private router: Router, 
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private apuntesService: ApuntesService,
+    private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.nombreAsignatura = this.route.snapshot.paramMap.get('nombre') || 'Asignatura';
-    this.cargarArchivosPorAsignatura();
-  }
-
-  cargarArchivosPorAsignatura() {
-    // Datos extraídos del documento real [cite: 1, 3, 12, 20]
-    this.listaArchivos = [
-      { 
-        nombre: 'UD3.XMLSchema.pdf', 
-        autor: 'Catalina Esteban González', // 
-        fecha: '25/10/2023', // 
-        verificado: true, 
-        urlReal: 'assets/docs/UD3.XMLSchema.pdf',
-        portadaUrl: '', 
-        comentarioAutor: 'Apuntes sobre UD2: XSD (XML Schema Definition). Define la estructura y validación de documentos XML.', // [cite: 12, 25]
-        comentariosDestacados: [
-          { usuario: 'Juan', texto: 'Buenísimos estos apuntes.' },
-          { usuario: 'Maria', texto: 'Me han salvado el examen.' }
-        ],
-        nuevoComentario: ''
-      }
-    ];
     
-    // Al cargar, generamos la miniatura de la primera página del PDF real
-    this.listaArchivos.forEach(archivo => this.generarPortadaReal(archivo));
+    const nombresSegundo = [
+      'Acceso a Datos',
+      'Programación de Servicios y Procesos',
+      'Programación multimedia y dispositivos móviles',
+      'Desarrollo de Interfaces',
+      'Digitalización',
+      'Sistemas de gestión empresarial'
+    ];
+    this.cursoActual = nombresSegundo.includes(this.nombreAsignatura) ? '2º' : '1º';
+
+    this.cargarDatosDesdeBackend();
   }
 
-  // Genera una imagen a partir de la primera hoja del PDF para usarla como portada
-  async generarPortadaReal(archivo: any) {
-    try {
-      const loadingTask = pdfjsLib.getDocument(archivo.urlReal);
-      const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 0.5 });
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      
-      if (!context) return;
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      // El objeto 'canvas' es requerido en versiones recientes de pdfjs-dist
-      const renderContext = { 
-        canvasContext: context, 
-        viewport: viewport,
-        canvas: canvas 
-      };
-
-      await page.render(renderContext).promise;
-      archivo.portadaUrl = canvas.toDataURL();
-    } catch (error) {
-      console.error("Error al generar la portada del PDF:", error);
-      archivo.portadaUrl = 'assets/img/default-pdf.png';
+  public cargarDatosDesdeBackend(): void {
+    if (this.subscripcionApuntes) {
+      this.subscripcionApuntes.unsubscribe();
     }
+
+    this.subscripcionApuntes = this.apuntesService.getApuntesPorAsignatura(this.nombreAsignatura).subscribe({
+      next: (data: ApunteDB[]) => { 
+        this.listaArchivos = data.map((apunte: ApunteDB) => {
+          const urlSegura = apunte.urlCloudinary.replace('http:', 'https:');
+          return {
+            id: apunte.id,
+            nombre: apunte.titulo,
+            autor: apunte.autor ? apunte.autor.nombre : 'Usuario DAMK', 
+            fecha: new Date(apunte.fechaSubida).toLocaleDateString(),
+            verificado: apunte.estado === 'VERIFICADO',
+            urlReal: urlSegura, 
+            portadaUrl: 'https://placehold.co/400x500/1e293b/ffffff?text=Cargando+PDF...', 
+            comentarioAutor: 'Material educativo verificado.',
+            comentariosDestacados: [],
+            nuevoComentario: ''
+          };
+        });
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+        this.listaArchivos.forEach(archivo => this.generarPortadaReal(archivo));
+      },
+      error: (err: any) => console.error("[SISTEMA] Error API:", err)
+    });
   }
 
-  onFileSelected(event: any) { 
+  /**
+   * PASO 1: Captura el archivo y abre el modal de detalles.
+   */
+  public onFileSelected(event: any): void { 
     const file = event.target.files[0];
     if (file) {
-      console.log('Archivo preparado para subir a Spring Boot:', file.name);
-      // Aquí dispararías el servicio de subida real
-      alert(`Archivo "${file.name}" listo para ser procesado.`);
+      this.datosSubida.archivo = file;
+      // Limpiamos la extensión para el título por defecto
+      this.datosSubida.titulo = file.name.replace(/\.[^/.]+$/, "");
+      this.datosSubida.comentario = '';
+      this.modalSubidaAbierto = true;
+      this.cdr.detectChanges();
     }
   }
 
-  // Métodos para manejar la previsualización (Iframe seguro)
-  abrirPrevisualizacion(archivo: any) {
-    this.archivoSeleccionado = archivo;
-    this.urlPrevisualizacion = this.sanitizer.bypassSecurityTrustResourceUrl(archivo.urlReal);
+  /**
+   * PASO 2: Confirmación final con los datos del formulario.
+   */
+  public confirmarSubida(): void {
+    if (!this.datosSubida.archivo || !this.datosSubida.titulo) return;
+
+    const nombresSegundo = [
+      'Acceso a Datos',
+      'Programación de Servicios y Procesos',
+      'Programación multimedia y dispositivos móviles',
+      'Desarrollo de Interfaces',
+      'Digitalización',
+      'Sistemas de gestión empresarial'
+    ];
+    const cursoAsignado = nombresSegundo.includes(this.nombreAsignatura) ? "Segundo" : "Primero";
+
+    this.apuntesService.subirApunte(
+      this.datosSubida.archivo, 
+      this.datosSubida.titulo, 
+      this.nombreAsignatura, 
+      cursoAsignado, 
+      1
+    ).subscribe({
+      next: (res: any) => {
+        this.cargarDatosDesdeBackend();
+        this.cancelarSubida();
+        alert(`¡Apunte "${this.datosSubida.titulo}" subido correctamente!`);
+      },
+      error: (err: any) => console.error("[ERROR] Subida fallida:", err)
+    });
   }
 
-  cerrarPrevisualizacion() {
+  public cancelarSubida(): void {
+    this.modalSubidaAbierto = false;
+    this.datosSubida = { archivo: null, titulo: '', comentario: '' };
+    this.cdr.detectChanges();
+  }
+
+  public async generarPortadaReal(archivo: any): Promise<void> {
+    try {
+      const loadingTask = pdfjsLib.getDocument({ url: archivo.urlReal, withCredentials: false });
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 0.4 });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error("Contexto no disponible");
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      await page.render({ canvasContext: context, viewport: viewport, canvas: canvas }).promise;
+      archivo.portadaUrl = canvas.toDataURL('image/png');
+      this.cdr.detectChanges();
+    } catch (error) {
+      archivo.portadaUrl = 'https://placehold.co/400x500/334155/ffffff?text=PDF';
+      this.cdr.detectChanges();
+    }
+  }
+
+  public abrirPrevisualizacion(archivo: any): void {
+    const urlGoogleVisor = `https://docs.google.com/viewer?url=${encodeURIComponent(archivo.urlReal)}&embedded=true`;
+    this.archivoSeleccionado = archivo;
+    this.urlPrevisualizacion = this.sanitizer.bypassSecurityTrustResourceUrl(urlGoogleVisor);
+    this.cdr.detectChanges();
+  }
+
+  public cerrarPrevisualizacion(): void {
     this.archivoSeleccionado = null;
     this.urlPrevisualizacion = null;
+    this.cdr.detectChanges();
   }
 
-  descargarArchivo(archivo: any) {
-    const link = document.createElement('a');
-    link.href = archivo.urlReal;
-    link.download = archivo.nombre;
-    link.click();
+  public async descargarArchivo(archivo: any): Promise<void> {
+    const nombreFinal = archivo.nombre.toLowerCase().endsWith('.pdf') ? archivo.nombre : `${archivo.nombre}.pdf`;
+    try {
+      const respuesta = await fetch(archivo.urlReal);
+      const binario = await respuesta.blob();
+      const urlLocal = window.URL.createObjectURL(binario);
+      const link = document.createElement('a');
+      link.href = urlLocal; link.download = nombreFinal;
+      document.body.appendChild(link); link.click();
+      document.body.removeChild(link); window.URL.revokeObjectURL(urlLocal);
+    } catch (error) {
+      window.open(archivo.urlReal, '_blank');
+    }
   }
 
-  volver() { this.router.navigate(['/home']); }
+  public volver(): void { this.router.navigate(['/home']); }
 
-  // Lógica de interacción social
-  enviarMensajeForo() {
+  public enviarMensajeForo(): void {
     if (this.nuevoMensajeForo.trim()) {
       this.comentariosForo.push({
-        usuario: 'Tú',
-        texto: this.nuevoMensajeForo,
+        usuario: 'Tú', texto: this.nuevoMensajeForo,
         fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TuUser'
       });
-      this.nuevoMensajeForo = '';
+      this.nuevoMensajeForo = ''; this.cdr.detectChanges();
     }
   }
 
-  enviarComentarioArchivo(archivo: any) {
-    if (archivo.nuevoComentario.trim()) {
+  public enviarComentarioArchivo(archivo: any): void {
+    if (archivo.nuevoComentario && archivo.nuevoComentario.trim()) {
       archivo.comentariosDestacados.push({ usuario: 'Tú', texto: archivo.nuevoComentario });
-      archivo.nuevoComentario = '';
+      archivo.nuevoComentario = ''; this.cdr.detectChanges();
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this.subscripcionApuntes) { this.subscripcionApuntes.unsubscribe(); }
   }
 }

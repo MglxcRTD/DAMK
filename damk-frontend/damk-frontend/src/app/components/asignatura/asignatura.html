@@ -1,20 +1,24 @@
 <div class="subject-wrapper">
   
   <header class="main-header">
-    <button class="btn-back-nav" (click)="volver()">
-      <i class="material-icons">arrow_back</i>
-    </button>
+    <div class="header-left">
+      <button class="btn-back-nav" (click)="volver()">
+        <i class="material-icons">arrow_back</i>
+      </button>
+    </div>
     
     <div class="centered-title-group">
-      <h1>{{ nombreAsignatura }}</h1>
-      <span class="course-tag">1º DAM</span>
+      <h1 class="subject-title">{{ nombreAsignatura }}</h1>
+      <span class="course-tag">{{ cursoActual }} DAM</span>
     </div>
 
-    <button class="btn-upload-nav" (click)="fileInput.click()">
-      <i class="material-icons">cloud_upload</i>
-      <span>SUBIR APUNTES</span>
-    </button>
-    <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none" accept=".pdf">
+    <div class="header-right">
+      <button class="btn-upload-nav" (click)="fileInput.click()">
+        <i class="material-icons">cloud_upload</i>
+        <span>SUBIR APUNTES</span>
+      </button>
+      <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none" accept=".pdf">
+    </div>
   </header>
 
   <div class="subject-layout">
@@ -47,10 +51,12 @@
           <div class="info-column">
             <div class="meta-box">
               <span>Publicado por</span>
-              <strong>{{ archivo.autor }}</strong> </div>
+              <strong>{{ archivo.autor }}</strong> 
+            </div>
             <div class="meta-box">
               <span>Fecha de subida</span>
-              <strong>{{ archivo.fecha }}</strong> </div>
+              <strong>{{ archivo.fecha }}</strong> 
+            </div>
             <div class="author-note-container">
               <p>{{ archivo.comentarioAutor }}</p>
             </div>
@@ -121,4 +127,48 @@
       </div>
     </div>
   </div>
+
+  <div class="preview-overlay" *ngIf="modalSubidaAbierto" (click)="cancelarSubida()">
+    <div class="modal-container upload-form-modal" (click)="$event.stopPropagation()">
+      
+      <div class="modal-header">
+        <div class="header-info">
+          <h3>Subir material nuevo</h3>
+          <span class="course-tag">{{ cursoActual }} DAM - {{ nombreAsignatura }}</span>
+        </div>
+        <button (click)="cancelarSubida()"><i class="material-icons">close</i></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="upload-form-content">
+          <div class="file-info-badge">
+            <i class="material-icons">picture_as_pdf</i>
+            <div class="file-texts">
+              <strong>{{ datosSubida.archivo?.name }}</strong>
+              <small>{{ (datosSubida.archivo?.size || 0) / 1024 / 1024 | number:'1.1-2' }} MB</small>
+            </div>
+          </div>
+
+          <div class="input-field-premium">
+            <label>Título visible para la comunidad</label>
+            <input type="text" [(ngModel)]="datosSubida.titulo" placeholder="Ej: Resumen completo Tema 3">
+          </div>
+
+          <div class="input-field-premium">
+            <label>Comentario o descripción breve (opcional)</label>
+            <textarea [(ngModel)]="datosSubida.comentario" rows="3" placeholder="Añade algún detalle sobre el contenido..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-text-only" (click)="cancelarSubida()">CANCELAR</button>
+        <button class="btn-confirm-upload" (click)="confirmarSubida()" [disabled]="!datosSubida.titulo">
+          <i class="material-icons">check_circle</i>
+          CONFIRMAR SUBIDA
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

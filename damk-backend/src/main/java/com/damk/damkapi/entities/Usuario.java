@@ -39,8 +39,9 @@ public class Usuario {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Rol rol;
 
-    @Column(name = "puntos_reputacion")
-    private int puntosReputacion = 0;
+    @Column(name = "fecha_creacion", updatable = false)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private java.time.LocalDate fechaCreacion;
 
     @Column(name = "avatar_url")
     private String avatarUrl;
@@ -51,4 +52,11 @@ public class Usuario {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String providerId;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.fechaCreacion == null) {
+            this.fechaCreacion = java.time.LocalDate.now();
+        }
+    }
 }
