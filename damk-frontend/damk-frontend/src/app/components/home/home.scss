@@ -171,7 +171,8 @@ $pato-red: #ff4757;
                 
                 &.verificacion { background: rgba($amarillo-pato, 0.15); color: $naranja-pico; }
                 &.sistema { background: rgba($pato-red, 0.1); color: $pato-red; }
-                &.amistad { background: rgba($amarillo-pato, 0.2); color: $naranja-pico; } // Estilo para noti amistad
+                &.social { background: rgba($amarillo-pato, 0.2); color: $naranja-pico; } 
+                &.amistad { background: rgba($amarillo-pato, 0.2); color: $naranja-pico; } 
               }
 
               .noti-content {
@@ -201,6 +202,13 @@ $pato-red: #ff4757;
           overflow: hidden; 
           i { font-size: 24px; color: var(--text-muted); }
           .avatar-img-nav { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+          
+          // --- ESTILO SVG NAV ---
+          .messenger-mock-gold-nav {
+            width: 100%; height: 100%; background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            display: flex; align-items: center; justify-content: center;
+            svg { width: 70%; fill: $amarillo-pato; }
+          }
         }
       }
     }
@@ -396,8 +404,8 @@ $pato-red: #ff4757;
             
             &.has-pending { 
               position: relative;
-              &::after {
-                content: ''; position: absolute; top: 8px; right: 8px;
+              .dot-badge {
+                position: absolute; top: 8px; right: 8px;
                 width: 8px; height: 8px; background: $pato-red; border-radius: 50%;
                 border: 2px solid var(--bg-card);
               }
@@ -406,7 +414,6 @@ $pato-red: #ff4757;
         }
       }
 
-      // --- PESTAÑAS PARA EL ADMINISTRADOR ---
       .admin-tabs {
         display: flex;
         margin: 0 20px 15px;
@@ -496,8 +503,17 @@ $pato-red: #ff4757;
 
           .avatar-box {
             position: relative; width: 50px; height: 50px;
+            
             img { width: 100%; height: 100%; border-radius: 15px; object-fit: cover; }
             
+            // --- ESTILO PATO DORADO MINI ---
+            .messenger-mock-gold-mini {
+              width: 100%; height: 100%; border-radius: 15px;
+              background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+              display: flex; align-items: center; justify-content: center;
+              svg { width: 65%; fill: $amarillo-pato; }
+            }
+
             .mini-avatar-placeholder {
               width: 100%; height: 100%;
               background: var(--border-color);
@@ -506,10 +522,19 @@ $pato-red: #ff4757;
               font-weight: 800; border-radius: 15px;
             }
 
-            i { font-size: 24px; color: $amarillo-pato; }
             .online-indicator {
               position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px;
               background: #10b981; border: 3px solid var(--bg-card); border-radius: 50%;
+            }
+            
+            // --- BADGE DE MENSAJES PENDIENTES ---
+            .contact-badge {
+              position: absolute; top: -5px; right: -5px;
+              background: $pato-red; color: white; font-size: 0.65rem;
+              font-weight: 900; min-width: 18px; height: 18px;
+              border-radius: 50%; display: flex; align-items: center;
+              justify-content: center; border: 2px solid var(--bg-card);
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             }
           }
 
@@ -517,12 +542,15 @@ $pato-red: #ff4757;
             flex: 1;
             .c-name { display: block; font-weight: 700; color: var(--text-main); }
             .c-preview { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            
+            // --- ESTILOS TEXTO NO LEÍDO ---
+            .unread-name { font-weight: 900; color: var(--text-main); }
+            .unread-text { font-weight: 700; color: var(--text-main); }
           }
         }
       }
     }
 
-    // --- SECCIÓN: VISTA DE CHAT ABIERTO ---
     .active-chat-wrapper {
       display: flex; flex-direction: column; height: 100%;
 
@@ -530,7 +558,6 @@ $pato-red: #ff4757;
         padding: 15px 20px; display: flex; align-items: center; gap: 15px;
         border-bottom: 1px solid var(--border-color); background: var(--bg-app);
 
-        // --- SOLUCIÓN: ESTILO FLECHA VOLVER ---
         .btn-back-chat {
           background: var(--input-bg);
           border: 1px solid var(--border-color);
@@ -590,7 +617,6 @@ $pato-red: #ff4757;
   }
 }
 
-// --- ACTUALIZACIÓN: MODAL DE BÚSQUEDA ---
 .search-modal-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 2000;
@@ -638,6 +664,13 @@ $pato-red: #ff4757;
           &:hover { background: var(--bg-app); }
           .user-info {
             display: flex; align-items: center; gap: 12px;
+            
+            // --- MINI AVATAR SEARCH ---
+            .mini-avatar-search {
+              width: 35px; height: 35px; border-radius: 10px; overflow: hidden;
+              .img-mini { width: 100%; height: 100%; object-fit: cover; }
+            }
+
             .mini-avatar { 
               width: 35px; height: 35px; background: $amarillo-pato; color: #1a1a1a;
               border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800;

@@ -1,6 +1,7 @@
 package com.damk.damkapi.controllers;
 
 import com.damk.damkapi.dtos.MensajeDTO;
+import com.damk.damkapi.dtos.SolicitudCrearDTO;
 import com.damk.damkapi.entities.*;
 import com.damk.damkapi.repositories.*;
 import com.damk.damkapi.services.ChatService;
@@ -11,13 +12,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-// Cambiamos el RequestMapping a uno más general para que cubra tanto Admin como User
 @RequestMapping("/api/solicitudes")
 @CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
 public class SolicitudController {
@@ -26,7 +27,45 @@ public class SolicitudController {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private ChatService chatService;
 
-    // --- NUEVO MÉTODO: SOLUCIÓN AL ERROR 404 (/api/solicitudes/me) ---
+    /**
+     * MÉTODO ACTUALIZADO: Recepción mediante Map para evitar errores de deserialización (Bad Request 400).
+     * Extraemos los datos del mapa y construimos la entidad SolicitudProfesor vinculada al usuario activo.
+     * Se usa Object en el Map para mayor flexibilidad con valores nulos o vacíos.
+     */
+    @PostMapping("/crear")
+    public ResponseEntity<?> crearSolicitud(@RequestBody Map<String, Object> payload, Authentication authentication) {
+        return buscarUsuarioPorAutenticacion(authentication)
+                .map(usuario -> {
+                    // 1. Verificación de existencia previa
+                    if (solicitudRepository.findByUsuario(usuario).isPresent()) {
+                        return ResponseEntity.badRequest().body(Map.of("message", "Ya tienes una solicitud pendiente"));
+                    }
+
+                    // 2. Construcción manual de la entidad desde el payload
+                    // Usamos String.valueOf para asegurar que convertimos los datos del JSON correctamente
+                    SolicitudProfesor nueva = new SolicitudProfesor();
+                    nueva.setUsuario(usuario);
+                    nueva.setNombre(String.valueOf(payload.get("nombre")));
+                    nueva.setApellidos(String.valueOf(payload.get("apellidos")));
+                    nueva.setCentroTrabajo(String.valueOf(payload.get("centroTrabajo")));
+
+                    // Manejo de LinkedIn (puede ser opcional)
+                    Object linkedInVal = payload.get("linkedIn");
+                    nueva.setLinkedIn(linkedInVal != null ? String.valueOf(linkedInVal) : "");
+
+                    nueva.setEstado(EstadoSolicitud.PENDIENTE);
+                    nueva.setFechaSolicitud(LocalDateTime.now());
+
+                    // 3. Persistencia en base de datos
+                    solicitudRepository.save(nueva);
+
+                    System.out.println("[SOLICITUD] Creada con éxito para el usuario: " + usuario.getUsername());
+
+                    return ResponseEntity.ok(Map.of("message", "Solicitud creada con éxito"));
+                })
+                .orElse(ResponseEntity.status(401).body(Map.of("error", "No autenticado")));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<?> obtenerMiEstadoSolicitud(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -43,8 +82,6 @@ public class SolicitudController {
                 })
                 .orElse(ResponseEntity.status(404).body(Map.of("error", "Usuario no encontrado")));
     }
-
-    // --- MÉTODOS DE ADMINISTRACIÓN (Ruta ajustada para colgar de /api/solicitudes) ---
 
     @GetMapping("/admin/pendientes")
     @PreAuthorize("hasAuthority('ADMIN') or hasRole('ADMIN')")
@@ -76,6 +113,7 @@ public class SolicitudController {
             buscarUsuarioPorAutenticacion(authentication).ifPresent(admin -> {
                 MensajeDTO m = new MensajeDTO();
                 m.setReceptorId(usuarioAlumno.getId());
+                m.setEmisorId(admin.getId());
                 m.setContenido(motivo != null ? motivo : "Tu solicitud ha sido revisada.");
                 chatService.enviarMensaje(admin.getId(), m);
             });
@@ -84,11 +122,10 @@ public class SolicitudController {
         return ResponseEntity.ok(Map.of("message", "OK"));
     }
 
-    // MÉTODO DE TEST MANTENIDO
     @GetMapping("/admin/quien-soy")
     public ResponseEntity<?> testSesion(Authentication auth) {
         if (auth == null) {
-            return ResponseEntity.ok(Map.of("status", "No hay objeto Authentication (Sesión no detectada)"));
+            return ResponseEntity.ok(Map.of("status", "No hay objeto Authentication"));
         }
         return ResponseEntity.ok(Map.of(
                 "nombre", auth.getName(),
@@ -97,7 +134,6 @@ public class SolicitudController {
         ));
     }
 
-    // Lógica de búsqueda de usuario centralizada con corrección de variable final
     private Optional<Usuario> buscarUsuarioPorAutenticacion(Authentication authentication) {
         if (authentication == null) return Optional.empty();
 
@@ -110,7 +146,6 @@ public class SolicitudController {
             }
         }
 
-        // CORRECCIÓN: Creamos una variable final que reciba el valor final antes de entrar en la lambda
         final String identificadorFinal = tempIdentificador;
 
         return usuarioRepository.findByUsername(identificadorFinal)

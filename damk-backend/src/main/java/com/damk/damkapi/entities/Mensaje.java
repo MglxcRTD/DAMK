@@ -21,6 +21,12 @@ public class Mensaje {
     @JoinColumn(name = "emisor_id")
     private Usuario emisor;
 
+    @ManyToOne
+    @JoinColumn(name = "receptor_id")
+    private Usuario receptor;
+
+
+
     @Column(columnDefinition = "TEXT")
     private String contenido;
 

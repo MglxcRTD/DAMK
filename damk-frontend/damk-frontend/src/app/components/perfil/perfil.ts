@@ -20,7 +20,14 @@ export class Perfil implements OnInit {
   mensajeFeedback: { texto: string, tipo: 'exito' | 'error' } | null = null;
 
   modalProfesorAbierto: boolean = false;
-  solicitudProfesor = { nombre: '', apellidos: '', centroTrabajo: '', linkedIn: '' };
+  
+  // Mantenemos los nombres de las propiedades alineados con el estándar Java
+  solicitudProfesor = { 
+    nombre: '', 
+    apellidos: '', 
+    centroTrabajo: '', 
+    linkedIn: '' 
+  };
 
   constructor(
     private router: Router, 
@@ -58,7 +65,7 @@ export class Perfil implements OnInit {
           this.cdr.detectChanges();
         },
         error: (err) => {
-          console.error("Error al sincronizar con la DB", err);
+          console.error("Error al sincronizar con la DB:", err);
           if (err.status === 401) {
             this.forzarReLogin();
           }
@@ -133,27 +140,53 @@ export class Perfil implements OnInit {
 
   /**
    * FLUJO DE VERIFICACIÓN:
-   * Envía la solicitud al backend y gestiona la respuesta con Toast.
+   * Enviamos un JSON plano para que el @RequestBody Map del backend no sufra.
    */
   enviarSolicitudVerificacion() {
+    // Validación manual antes de enviar
     if (!this.solicitudProfesor.nombre || !this.solicitudProfesor.apellidos || !this.solicitudProfesor.centroTrabajo) {
       this.mostrarFeedback("Por favor, completa los campos obligatorios", "error");
       return;
     }
 
-    this.authService.solicitarPuestoProfesor(this.solicitudProfesor).subscribe({
+    // Convertimos a un objeto de datos simple para evitar problemas de tipos
+    const datosEnvio = {
+      nombre: String(this.solicitudProfesor.nombre),
+      apellidos: String(this.solicitudProfesor.apellidos),
+      centroTrabajo: String(this.solicitudProfesor.centroTrabajo),
+      linkedIn: String(this.solicitudProfesor.linkedIn || "")
+    };
+
+    console.log("[SISTEMA] Intentando enviar solicitud docente...", datosEnvio);
+
+    this.authService.solicitarPuestoProfesor(datosEnvio).subscribe({
       next: (res) => {
+        console.log("[SERVIDOR] Éxito:", res);
         this.mostrarFeedback("¡Solicitud enviada! La revisaremos pronto", "exito");
         this.modalProfesorAbierto = false;
-        this.solicitudProfesor = { nombre: '', apellidos: '', centroTrabajo: '', linkedIn: '' };
+        
+        // Limpiar el formulario
+        this.solicitudProfesor = { 
+          nombre: '', 
+          apellidos: '', 
+          centroTrabajo: '', 
+          linkedIn: '' 
+        };
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error("Error al enviar la solicitud de profesor", err);
+        console.error("[SERVIDOR] Error capturado:", err);
+        
+        // Intentamos sacar el mensaje de error del backend
+        let mensajeError = "Error al enviar la solicitud";
+        if (err.error && typeof err.error === 'object') {
+          mensajeError = err.error.message || err.error.error || mensajeError;
+        }
+
+        this.mostrarFeedback(mensajeError, "error");
+        
         if (err.status === 401) {
           this.forzarReLogin();
-        } else {
-          this.mostrarFeedback("Error al enviar la solicitud", "error");
         }
       }
     });

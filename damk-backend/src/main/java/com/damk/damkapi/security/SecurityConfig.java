@@ -37,57 +37,61 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Configuramos el CORS primero para que no bloquee las pre-flight requests (OPTIONS)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Deshabilitamos CSRF porque estamos en desarrollo y manejamos las sesiones manualmente
                 .csrf(csrf -> csrf.disable())
 
+                // Configuramos el repositorio de seguridad para que la sesión persista entre peticiones
                 .securityContext(context -> context
                         .securityContextRepository(securityContextRepository())
                 )
 
+                // Política de sesión: Siempre crear si no existe para mantener al usuario logueado
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        // REGLA 1: Excepciones públicas
+                        // REGLA 1: Rutas totalmente públicas
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/login/**",
                                 "/oauth2/**",
                                 "/error",
                                 "/api/apuntes/**",
-                                "/ws-damk/**",
-                                "/api/admin/verificaciones/quien-soy"
+                                "/ws-damk/**"
                         ).permitAll()
 
-                        // REGLA 2: Rutas específicas de Usuarios y Amistad (Para evitar el 401)
-                        // IMPORTANTE: .authenticated() permite a cualquier logueado (Admin o Alumno)
+                        // REGLA 2: Rutas para usuarios autenticados (Cualquier ROL)
                         .requestMatchers("/api/usuarios/buscar").authenticated()
                         .requestMatchers("/api/usuarios/todos").authenticated()
                         .requestMatchers("/api/amistades/**").authenticated()
-
-                        // REGLA 3: Restricciones de Perfil y Solicitudes
-                        .requestMatchers("/api/solicitudes/**").authenticated()
+                        .requestMatchers("/api/solicitudes/crear").authenticated() // Aseguramos que esta ruta sea accesible
+                        .requestMatchers("/api/solicitudes/me").authenticated()
                         .requestMatchers("/api/usuarios/me", "/api/usuarios/upload-pfp", "/api/usuarios/update").authenticated()
 
-                        // REGLA 4: Restricciones por Rol de Administrador
-                        // Usamos hasRole si el String en BD es "ADMIN" (Spring añade ROLE_ automáticamente)
-                        // O usamos hasAuthority si prefieres el String exacto "ROLE_ADMIN"
+                        // REGLA 3: Rutas exclusivas para el Administrador
+                        .requestMatchers("/api/solicitudes/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // Cierre de seguridad
+                        // Cierre de seguridad total
                         .anyRequest().authenticated()
                 )
 
+                // Si no está autenticado, devolvemos 401 en lugar de redirigir a una página de login HTML
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
 
+                // Configuración de Login social (Google/GitHub)
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
                         .successHandler((request, response, authentication) -> {
+                            // Guardamos el contexto de seguridad manualmente en la sesión tras el éxito
                             securityContextRepository().saveContext(
                                     org.springframework.security.core.context.SecurityContextHolder.getContext(),
                                     request,
@@ -102,6 +106,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityContextRepository securityContextRepository() {
+        // Este bean es vital para que Spring guarde la sesión en el lugar correcto (Atributos de request + Sesión HTTP)
         return new DelegatingSecurityContextRepository(
                 new RequestAttributeSecurityContextRepository(),
                 new HttpSessionSecurityContextRepository()
@@ -116,8 +121,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        // El origen de tu frontend en Angular
         configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+
+        // Permitimos todos los métodos HTTP necesarios
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+
+        // Cabeceras permitidas. Añadimos X-Requested-With que es común en peticiones AJAX
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
@@ -127,11 +138,17 @@ public class SecurityConfig {
                 "Cookie"
         ));
 
+        // CRÍTICO: Permitir el envío de Cookies de sesión desde el frontend
         configuration.setAllowCredentials(true);
+
+        // Exponemos la cabecera Set-Cookie para que el navegador la procese correctamente
         configuration.setExposedHeaders(List.of("Set-Cookie"));
+
+        // Tiempo de caché para la configuración CORS
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Aplicamos esta configuración a todas las rutas de la API
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }

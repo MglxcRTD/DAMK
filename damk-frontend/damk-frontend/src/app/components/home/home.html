@@ -20,6 +20,9 @@
     <div class="nav-right">
       <button class="action-icon" (click)="toggleChat()" [class.active]="mostrarChatFlotante">
         <i class="material-icons">mail</i>
+        <span class="badge-count" *ngIf="pendientesCount > 0">
+          {{ pendientesCount > 9 ? '+9' : pendientesCount }}
+        </span>
       </button>
       
       <div class="notification-container">
@@ -61,7 +64,12 @@
         </div>
         <div class="avatar-circle">
           <img *ngIf="usuarioActivo.avatarUrl" [src]="usuarioActivo.avatarUrl" class="avatar-img-nav">
-          <i *ngIf="!usuarioActivo.avatarUrl" class="material-icons">account_circle</i>
+          <div *ngIf="!usuarioActivo.avatarUrl" class="messenger-mock-gold-nav">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="35" r="20" />
+              <path d="M20,85 C20,60 80,60 80,85 L80,95 L20,95 Z" />
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -139,6 +147,7 @@
             <div class="header-actions">
               <button class="add-user-icon" (click)="toggleSolicitudes()" [class.has-pending]="solicitudesPendientes.length > 0">
                 <i class="material-icons">person_outline</i>
+                <span class="dot-badge" *ngIf="solicitudesPendientes.length > 0"></span>
               </button>
               <button class="add-user-icon" (click)="abrirModalBusqueda()">
                 <i class="material-icons">person_add_alt</i>
@@ -191,12 +200,23 @@
 
               <div class="contact-card" *ngFor="let c of contactos" (click)="abrirChatCon(c.id)">
                 <div class="avatar-box">
-                  <img [src]="c.avatar || 'assets/default-avatar.png'" alt="avatar">
+                  <img *ngIf="c.avatar" [src]="c.avatar" alt="avatar" class="avatar-img-chat">
+                  
+                  <div *ngIf="!c.avatar" class="messenger-mock-gold-mini">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="50" cy="35" r="20" />
+                      <path d="M20,85 C20,60 80,60 80,85 L80,95 L20,95 Z" />
+                    </svg>
+                  </div>
+
                   <span class="online-indicator" *ngIf="c.online"></span>
+                  <div class="contact-badge" *ngIf="c.pendientes > 0">
+                    {{ c.pendientes }}
+                  </div>
                 </div>
                 <div class="contact-details">
-                  <p class="c-name">{{ c.username }}</p>
-                  <p class="c-preview">{{ c.ultimoMensaje }}</p>
+                  <p class="c-name" [class.unread-name]="c.pendientes > 0">{{ c.username }}</p>
+                  <p class="c-preview" [class.unread-text]="c.pendientes > 0">{{ c.ultimoMensaje }}</p>
                 </div>
               </div>
             </ng-container>
@@ -204,7 +224,13 @@
             <ng-container *ngIf="usuarioActivo.rol === 'ADMIN' && chatTab === 'usuarios'">
               <div class="contact-card" *ngFor="let u of usuariosSistema" (click)="abrirChatCon(u.id)">
                 <div class="avatar-box">
-                  <div class="mini-avatar-placeholder">{{ u.username.charAt(0).toUpperCase() }}</div>
+                  <img *ngIf="u.avatar" [src]="u.avatar" alt="avatar" class="avatar-img-chat">
+                  <div *ngIf="!u.avatar" class="messenger-mock-gold-mini">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="50" cy="35" r="20" />
+                      <path d="M20,85 C20,60 80,60 80,85 L80,95 L20,95 Z" />
+                    </svg>
+                  </div>
                 </div>
                 <div class="contact-details">
                   <p class="c-name">{{ u.username }}</p>
@@ -278,11 +304,17 @@
             No se encontraron usuarios con "{{ terminoBusqueda }}"
           </p>
 
-          <p class="empty-search" *ngIf="terminoBusqueda.length < 3">Escribe al menos 3 letras para buscar...</p>
-
           <div class="search-item" *ngFor="let user of resultadosBusqueda">
             <div class="user-info">
-              <div class="mini-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+               <div class="mini-avatar-search">
+                  <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" class="img-mini">
+                  <div *ngIf="!user.avatarUrl" class="messenger-mock-gold-mini">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="50" cy="35" r="20" />
+                      <path d="M20,85 C20,60 80,60 80,85 L80,95 L20,95 Z" />
+                    </svg>
+                  </div>
+               </div>
               <span>{{ user.username }}</span>
             </div>
             <button class="btn-add-contact" (click)="enviarSolicitudAmistad(user)">

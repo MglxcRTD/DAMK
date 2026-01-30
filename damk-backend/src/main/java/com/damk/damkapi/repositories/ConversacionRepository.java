@@ -13,4 +13,7 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, Long
 
     // Para no duplicar chats entre las mismas dos personas
     Optional<Conversacion> findByUsuarioUnoAndUsuarioDos(Usuario u1, Usuario u2);
+
+    // Obtiene conversaciones activas para el feed lateral ordenadas por fecha
+    List<Conversacion> findByUsuarioUnoOrUsuarioDosOrderByUltimaActividadDesc(Usuario u1, Usuario u2);
 }
