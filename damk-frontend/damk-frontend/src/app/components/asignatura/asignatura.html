@@ -15,7 +15,7 @@
     <div class="header-right">
       <button class="btn-upload-nav" (click)="fileInput.click()">
         <i class="material-icons">cloud_upload</i>
-        <span>SUBIR APUNTES</span>
+        <span>COMPARTIR MATERIAL</span>
       </button>
       <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none" accept=".pdf">
     </div>
@@ -38,44 +38,50 @@
             <button class="btn-dl-hero" (click)="descargarArchivo(archivo)">
               <i class="material-icons">file_download</i>
             </button>
+            <button class="btn-save-library" (click)="guardarEnMiBiblioteca(archivo)">
+              <i class="material-icons">bookmark_add</i>
+            </button>
           </div>
 
-          <div class="pdf-portrait" (click)="abrirPrevisualizacion(archivo)">
-            <img [src]="archivo.portadaUrl" alt="Portada del PDF">
-            <div class="overlay-zoom">
-              <i class="material-icons">visibility</i>
-              <span>PREVISUALIZAR</span>
+          <div class="pdf-portrait-wrapper" (click)="abrirPrevisualizacion(archivo)">
+            <div class="pdf-portrait">
+              <img [src]="archivo.portadaUrl" alt="Portada del PDF">
+              <div class="overlay-zoom-pro">
+                <i class="material-icons">visibility</i>
+                <span>PREVISUALIZAR</span>
+              </div>
             </div>
           </div>
 
           <div class="info-column">
-            <div class="meta-box">
-              <span>Publicado por</span>
-              <strong>{{ archivo.autor }}</strong> 
+            <div class="info-item author-item">
+              <span class="label-text">PUBLICADO POR</span>
+              <strong>@{{ archivo.autor }}</strong> 
             </div>
-            <div class="meta-box">
-              <span>Fecha de subida</span>
+            <div class="info-item date-item">
+              <span class="label-text">FECHA DE SUBIDA</span>
               <strong>{{ archivo.fecha }}</strong> 
             </div>
-            <div class="author-note-container">
+            <div class="author-note-pro">
               <p>{{ archivo.comentarioAutor }}</p>
             </div>
           </div>
         </div>
 
         <footer class="card-footer-comments">
-          <div class="comment-bubble" *ngFor="let c of archivo.comentariosDestacados">
-            <b>@{{ c.usuario }}</b> {{ c.texto }}
+          <div class="comments-section-header">
+            <i class="material-icons">forum</i>
+            <span>Comentarios ({{ archivo.comentariosDestacados.length }})</span>
           </div>
-          
-          <div class="add-comment-area">
-            <input 
-              type="text" 
-              [(ngModel)]="archivo.nuevoComentario" 
-              placeholder="Añadir comentario..." 
-              (keyup.enter)="enviarComentarioArchivo(archivo)">
+          <div class="comment-bubble-pro" *ngFor="let c of archivo.comentariosDestacados">
+            <b class="user-handle">@{{ c.usuario }}</b> {{ c.texto }}
+          </div>
+          <div class="add-comment-area-pro">
+            <div class="input-glow-wrapper">
+              <input type="text" [(ngModel)]="archivo.nuevoComentario" placeholder="Añadir comentario..." (keyup.enter)="enviarComentarioArchivo(archivo)">
+            </div>
             <button (click)="enviarComentarioArchivo(archivo)" [disabled]="!archivo.nuevoComentario">
-              <i class="material-icons">add_comment</i>
+              <i class="material-icons">send</i>
             </button>
           </div>
         </footer>
@@ -83,92 +89,48 @@
     </main>
 
     <aside class="forum-sidebar">
-      <h3>FORO GENERAL</h3>
+      <div class="forum-header-pro">
+        <i class="material-icons">groups</i>
+        <h3>FORO DE CLASE</h3>
+      </div>
       <div class="chat-scroll">
-        <div class="msg-card" *ngFor="let m of comentariosForo">
-          <div class="avatar-sm">
-            <img [src]="m.avatarUrl">
-          </div>
-          <div class="msg-body">
-            <div class="msg-header">
-              <span class="user-nick">{{ m.usuario }}</span>
-              <small class="msg-time">{{ m.fecha }}</small>
+        <div class="msg-card-pro" *ngFor="let m of comentariosForo">
+          <div class="avatar-container"><img [src]="m.avatarUrl"></div>
+          <div class="msg-body-pro">
+            <div class="msg-meta">
+              <span class="user-nick-text">{{ m.usuario }}</span>
+              <small class="msg-time-stamp">{{ m.fecha }}</small>
             </div>
             <p>{{ m.texto }}</p>
           </div>
         </div>
       </div>
       <div class="forum-input-zone">
-        <input 
-          type="text" 
-          [(ngModel)]="nuevoMensajeForo" 
-          (keyup.enter)="enviarMensajeForo()" 
-          placeholder="Escribe al grupo...">
-        <button (click)="enviarMensajeForo()" [disabled]="!nuevoMensajeForo">
-          <i class="material-icons">send</i>
-        </button>
+        <div class="input-wrapper-pro">
+          <input type="text" [(ngModel)]="nuevoMensajeForo" placeholder="Escribe al grupo...">
+          <button (click)="enviarMensajeForo()" [disabled]="!nuevoMensajeForo"><i class="material-icons">send</i></button>
+        </div>
       </div>
     </aside>
   </div>
 
   <div class="preview-overlay" *ngIf="archivoSeleccionado" (click)="cerrarPrevisualizacion()">
     <div class="modal-container" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ archivoSeleccionado.nombre }}</h3>
+      <div class="modal-header-pro">
+        <div class="header-left-info">
+          <i class="material-icons">description</i>
+          <h3>{{ archivoSeleccionado.nombre }}</h3>
+        </div>
         <button (click)="cerrarPrevisualizacion()"><i class="material-icons">close</i></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body-viewer">
         <iframe [src]="urlPrevisualizacion" frameborder="0"></iframe>
       </div>
-      <div class="modal-footer">
-        <button class="btn-dl-hero" (click)="descargarArchivo(archivoSeleccionado)">
-          <i class="material-icons">file_download</i> Descargar para estudiar
+      <div class="modal-footer-pro">
+        <button class="btn-dl-hero-large" (click)="descargarArchivo(archivoSeleccionado)">
+          <i class="material-icons">file_download</i> Descargar PDF
         </button>
       </div>
     </div>
   </div>
-
-  <div class="preview-overlay" *ngIf="modalSubidaAbierto" (click)="cancelarSubida()">
-    <div class="modal-container upload-form-modal" (click)="$event.stopPropagation()">
-      
-      <div class="modal-header">
-        <div class="header-info">
-          <h3>Subir material nuevo</h3>
-          <span class="course-tag">{{ cursoActual }} DAM - {{ nombreAsignatura }}</span>
-        </div>
-        <button (click)="cancelarSubida()"><i class="material-icons">close</i></button>
-      </div>
-
-      <div class="modal-body">
-        <div class="upload-form-content">
-          <div class="file-info-badge">
-            <i class="material-icons">picture_as_pdf</i>
-            <div class="file-texts">
-              <strong>{{ datosSubida.archivo?.name }}</strong>
-              <small>{{ (datosSubida.archivo?.size || 0) / 1024 / 1024 | number:'1.1-2' }} MB</small>
-            </div>
-          </div>
-
-          <div class="input-field-premium">
-            <label>Título visible para la comunidad</label>
-            <input type="text" [(ngModel)]="datosSubida.titulo" placeholder="Ej: Resumen completo Tema 3">
-          </div>
-
-          <div class="input-field-premium">
-            <label>Comentario o descripción breve (opcional)</label>
-            <textarea [(ngModel)]="datosSubida.comentario" rows="3" placeholder="Añade algún detalle sobre el contenido..."></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-text-only" (click)="cancelarSubida()">CANCELAR</button>
-        <button class="btn-confirm-upload" (click)="confirmarSubida()" [disabled]="!datosSubida.titulo">
-          <i class="material-icons">check_circle</i>
-          CONFIRMAR SUBIDA
-        </button>
-      </div>
-    </div>
-  </div>
-
 </div>

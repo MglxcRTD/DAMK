@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/login/**",
+                                "/api/busqueda/**",
                                 "/oauth2/**",
                                 "/error",
                                 "/api/apuntes/**",
@@ -71,7 +72,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/solicitudes/crear").authenticated() // Aseguramos que esta ruta sea accesible
                         .requestMatchers("/api/solicitudes/me").authenticated()
                         .requestMatchers("/api/usuarios/me", "/api/usuarios/upload-pfp", "/api/usuarios/update").authenticated()
-
+                        .requestMatchers("/api/usuarios/buscar").authenticated()
                         // REGLA 3: Rutas exclusivas para el Administrador
                         .requestMatchers("/api/solicitudes/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

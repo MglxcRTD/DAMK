@@ -91,4 +91,12 @@ export class Auth {
   getMe(): Observable<any> {
     return this.getPerfilActual();
   }
+
+// En src/app/services/auth.ts
+busquedaGlobal(termino: string): Observable<any> {
+  // Quitamos "auth" de la URL. 
+  // La URL final debe ser: http://localhost:8080/api/busqueda/global
+  const BUSQUEDA_URL = 'http://localhost:8080/api/busqueda/global';
+  return this.http.get(`${BUSQUEDA_URL}?q=${termino}`, this.secureOptions);
+}
 }

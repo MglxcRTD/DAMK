@@ -6,6 +6,7 @@ import { Login } from './components/login/login';
 import { Asignatura } from './components/asignatura/asignatura';
 import { Perfil } from './components/perfil/perfil';
 import { Verificaciones } from './components/admin/verificaciones/verificaciones'; 
+import { MisApuntes } from './components/mis-apuntes/mis-apuntes'; // <--- IMPORTACIÓN AÑADIDA
 // 1. Importamos el Guard que creaste en la terminal
 import { AdminGuard } from './guards/admin-guard';
 
@@ -16,6 +17,9 @@ const routes: Routes = [
   { path: 'asignatura/:nombre', component: Asignatura },
   { path: 'perfil', component: Perfil },
   
+  // NUEVA RUTA PARA MIS APUNTES
+  { path: 'mis-apuntes', component: MisApuntes }, // <--- RUTA AÑADIDA
+
   // 2. Protegemos la ruta con el Guard
   { 
     path: 'admin/verificaciones', 

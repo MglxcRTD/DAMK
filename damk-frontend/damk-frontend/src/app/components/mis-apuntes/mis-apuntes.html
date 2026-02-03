@@ -1,0 +1,150 @@
+<div class="library-wrapper">
+  
+  <header class="library-header">
+    <div class="header-main-content">
+      <div class="nav-group">
+        <button class="btn-back-pro" (click)="volver()" title="Volver al Inicio">
+          <i class="material-icons">arrow_back</i>
+        </button>
+        <div class="text-group">
+          <h1>Mi Centro de Contenido</h1>
+          <p>Gestión avanzada de tus archivos y colecciones</p>
+        </div>
+      </div>
+
+      <div class="quick-stats-glass">
+        <div class="stat-box">
+          <span class="value">{{ listaSubidos.length }}</span>
+          <span class="label">Subidos</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-box">
+          <span class="value">{{ listaGuardados.length }}</span>
+          <span class="label">Favoritos</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="library-body-container">
+    
+    <div class="toolbar-section glass-card">
+      <nav class="library-tabs">
+        <button [class.active]="tabActiva === 'subidos'" (click)='cambiarTab("subidos")'>
+          <i class="material-icons">cloud_done</i>
+          <span>MIS APORTACIONES</span>
+        </button>
+        <button [class.active]="tabActiva === 'guardados'" (click)='cambiarTab("guardados")'>
+          <i class="material-icons">auto_awesome_motion</i>
+          <span>GUARDADOS</span>
+        </button>
+      </nav>
+
+      <div class="internal-search">
+        <i class="material-icons">search</i>
+        <input type="text" 
+               [(ngModel)]="textoFiltro" 
+               (input)="filtrarContenido()"
+               placeholder="Filtrar por nombre o asignatura...">
+      </div>
+    </div>
+
+    <main class="library-main scroll-area">
+      
+      <div class="loader-overlay" *ngIf="cargando">
+        <div class="pato-spinner"></div>
+        <p>Sincronizando biblioteca...</p>
+      </div>
+
+      <div class="content-grid" *ngIf="tabActiva === 'subidos' && !cargando">
+        
+        <div class="empty-state-container" *ngIf="filtradosSubidos.length === 0">
+          <div class="empty-icon-box">
+            <i class="material-icons">upload_file</i>
+          </div>
+          <h3>No se encontraron resultados</h3>
+          <p>Prueba con otros términos o empieza a compartir material en las asignaturas.</p>
+          <button class="btn-action-pato" (click)="volver()">IR A CURSOS</button>
+        </div>
+
+        <article class="pro-card glass-card" 
+                 *ngFor="let a of filtradosSubidos" 
+                 (click)="irAlApunte(a)">
+          
+          <div class="card-status-indicator" [ngClass]="a.estado.toLowerCase()"></div>
+          
+          <div class="card-inner">
+            <div class="file-preview-mini">
+              <i class="material-icons">description</i>
+              <span class="extension-tag">PDF</span>
+            </div>
+
+            <div class="file-core-info">
+              <h3>{{ a.titulo }}</h3>
+              <div class="meta-tags">
+                <span class="tag-subject"><i class="material-icons">school</i> {{ a.asignatura }}</span>
+                <span class="tag-date"><i class="material-icons">event</i> {{ a.fechaFormateada }}</span>
+              </div>
+              
+              <div class="status-badge-pro" [ngClass]="a.estado.toLowerCase()">
+                <i class="material-icons">{{ a.estado === 'VERIFICADO' ? 'verified' : 'schedule' }}</i>
+                {{ a.estado }}
+              </div>
+            </div>
+
+            <div class="card-actions-vertical">
+              <button class="action-btn view" (click)="verArchivoOriginal(a.urlCloudinary, $event)" title="Ver PDF Original">
+                <i class="material-icons">visibility</i>
+              </button>
+              <button class="action-btn delete" (click)="eliminarApunte(a.id, $event)" title="Eliminar Apunte">
+                <i class="material-icons">delete_sweep</i>
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="content-grid" *ngIf="tabActiva === 'guardados'">
+        
+        <div class="empty-state-container" *ngIf="filtradosGuardados.length === 0">
+          <div class="empty-icon-box">
+            <i class="material-icons">bookmarks</i>
+          </div>
+          <h3>Tu estantería está vacía</h3>
+          <p>Guarda apuntes importantes mientras navegas por las asignaturas.</p>
+        </div>
+
+        <article class="pro-card glass-card" 
+                 *ngFor="let g of filtradosGuardados" 
+                 (click)="irAlApunte(g)">
+          
+          <div class="card-status-indicator verified"></div>
+          
+          <div class="card-inner">
+            <div class="file-preview-mini guardado">
+              <i class="material-icons">bookmark</i>
+            </div>
+
+            <div class="file-core-info">
+              <h3>{{ g.nombre }}</h3>
+              <div class="meta-tags">
+                <span class="tag-subject"><i class="material-icons">folder</i> {{ g.asignatura }}</span>
+                <span class="tag-author"><i class="material-icons">person</i> {{ g.autor }}</span>
+              </div>
+              <div class="status-badge-pro verified">
+                <i class="material-icons">stars</i> CONTENIDO GUARDADO
+              </div>
+            </div>
+
+            <div class="card-actions-vertical">
+              <button class="action-btn view" (click)="verArchivoOriginal(g.urlReal, $event)">
+                <i class="material-icons">open_in_new</i>
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+    </main>
+  </div>
+</div>

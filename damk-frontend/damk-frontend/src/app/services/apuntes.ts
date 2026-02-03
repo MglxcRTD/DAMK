@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -9,6 +9,18 @@ import { environment } from '../../environments/environment';
 export class ApuntesService {
   // Asegúrate de que en environment.ts la url sea http://localhost:8080/api
   private apiUrl = `${environment.apiUrl}/apuntes`;
+
+  /**
+   * Configuración compartida para peticiones que requieren sesión (Cookies).
+   */
+  private get secureOptions() {
+    return {
+      withCredentials: true,
+      headers: new HttpHeaders({
+        'X-Requested-With': 'XMLHttpRequest'
+      })
+    };
+  }
 
   constructor(private http: HttpClient) {}
 
@@ -23,7 +35,8 @@ export class ApuntesService {
     formData.append('curso', curso);
     formData.append('usuarioId', usuarioId.toString());
 
-    return this.http.post(`${this.apiUrl}/subir`, formData);
+    // Añadimos secureOptions para que el servidor identifique al autor mediante la sesión
+    return this.http.post(`${this.apiUrl}/subir`, formData, this.secureOptions);
   }
 
   /**
@@ -32,6 +45,32 @@ export class ApuntesService {
   getApuntesPorAsignatura(asignatura: string): Observable<any[]> {
     // Usamos encodeURIComponent por si la asignatura tiene espacios o tildes
     const asignaturaSafe = encodeURIComponent(asignatura);
-    return this.http.get<any[]>(`${this.apiUrl}/${asignaturaSafe}`);
+    return this.http.get<any[]>(`${this.apiUrl}/${asignaturaSafe}`, this.secureOptions);
+  }
+
+  // --- NUEVO MÉTODO PARA "MIS APUNTES" (PUNTO 2) ---
+
+  /**
+   * Recupera los apuntes que el usuario logueado ha subido (pendientes y verificados)
+   */
+  getMisSubidos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/mis-subidos`, this.secureOptions);
+  }
+
+  // --- NUEVOS MÉTODOS PARA PROFESORES (PUNTO 3) ---
+
+  /**
+   * Obtiene todos los apuntes pendientes de todo el sistema (Solo para Profesores/Admin)
+   */
+  getApuntesPendientesGlobal(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/pendientes`, this.secureOptions);
+  }
+
+  /**
+   * Cambia el estado de un apunte (VERIFICADO o RECHAZADO)
+   */
+  validarApunte(id: number, estado: string): Observable<any> {
+    const body = { estado: estado };
+    return this.http.put(`${this.apiUrl}/${id}/validar`, body, this.secureOptions);
   }
 }

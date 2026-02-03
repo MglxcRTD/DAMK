@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core'; 
 import { Router } from '@angular/router';
 import { Auth } from '../../services/auth'; 
 import { Chat } from '../../services/chat'; 
@@ -46,10 +46,11 @@ export class Home implements OnInit, OnDestroy {
   public chatActivo: Contacto | null = null;    
   public contactos: Contacto[] = [];           
 
-  public mostrarModalBusqueda: boolean = false;
+  public mostrarModalBusqueda: boolean = false; 
   public mostrarSolicitudes: boolean = false;   
   public solicitudesPendientes: any[] = [];     
   public terminoBusqueda: string = '';
+  
   public resultadosBusqueda: any[] = [];        
   public buscando: boolean = false;
 
@@ -64,11 +65,20 @@ export class Home implements OnInit, OnDestroy {
   };
 
   constructor(
-    private router: Router, 
+    public router: Router, // <--- CAMBIADO A PUBLIC para que el HTML pueda navegar directamente
     private authService: Auth,
     private chatService: Chat, 
     private cdr: ChangeDetectorRef 
   ) {}
+
+  @HostListener('document:click', ['$event'])
+  public manejarClicFuera(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.search-container')) {
+      this.mostrarModalBusqueda = false;
+      this.cdr.detectChanges();
+    }
+  }
 
   ngOnInit() {
     this.cargarDatosReales();
@@ -99,15 +109,12 @@ export class Home implements OnInit, OnDestroy {
   private inicializarServiciosPostLogin() {
     this.procesarNotificacionesSegunRol();
     
-    // Si es ADMIN, cargamos el directorio completo.
     if (this.usuarioActivo.rol === 'ADMIN') {
       this.cargarDirectorioUsuariosAdmin();
     } else {
       this.obtenerMisAmigosAceptados();
     }
 
-    // --- CORRECCIÓN CRÍTICA PARA EL FEED ---
-    // Cargamos las conversaciones previas para que el feed no esté vacío al entrar
     this.cargarFeedConversaciones();
     
     if (this.usuarioActivo?.id) {
@@ -116,10 +123,6 @@ export class Home implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * PERSISTENCIA DEL FEED:
-   * Llama al servicio para obtener los usuarios con los que ya se ha chateado.
-   */
   public cargarFeedConversaciones() {
     console.log("[USER] Recuperando feed de conversaciones activas...");
     this.chatService.getConversaciones().subscribe({
@@ -287,6 +290,54 @@ export class Home implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  public buscarGlobal() {
+    if (this.terminoBusqueda.length < 2) {
+      this.resultadosBusqueda = [];
+      this.mostrarModalBusqueda = false; 
+      return;
+    }
+    
+    this.mostrarModalBusqueda = true; 
+    this.buscando = true;
+    this.authService.busquedaGlobal(this.terminoBusqueda).subscribe({
+      next: (res: any) => {
+        const apuntes = res.apuntes.map((a: any) => ({ 
+          ...a, 
+          tipoItem: 'apunte',
+          display: a.titulo,
+          subtext: a.asignatura 
+        }));
+        
+        const usuarios = res.usuarios.map((u: any) => ({ 
+          ...u, 
+          tipoItem: 'usuario',
+          display: u.username,
+          subtext: u.rol 
+        }));
+
+        this.resultadosBusqueda = [...apuntes, ...usuarios];
+        this.buscando = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error("Error en búsqueda global:", err);
+        this.buscando = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  public seleccionarResultado(item: any) {
+    if (item.tipoItem === 'apunte') {
+      this.router.navigate(['/asignatura', item.asignatura]);
+    } else if (item.tipoItem === 'usuario') {
+      this.router.navigate(['/perfil'], { queryParams: { id: item.id } });
+    }
+    this.mostrarModalBusqueda = false; 
+    this.terminoBusqueda = ''; 
+    this.cdr.detectChanges();
+  }
+
   public buscarUsuariosBD() {
     if (this.terminoBusqueda.length < 3) return;
     this.buscando = true;
@@ -302,7 +353,7 @@ export class Home implements OnInit, OnDestroy {
   public enviarSolicitudAmistad(usuarioDestino: any) {
     this.authService.enviarSolicitudAmistad(this.usuarioActivo.id, usuarioDestino.id).subscribe({
       next: () => {
-        this.cerrarModalBusqueda();
+        this.mostrarModalBusqueda = false;
         this.notificaciones = [{
           id: `social-${Date.now()}`,
           titulo: 'Solicitud Enviada',
@@ -343,8 +394,17 @@ export class Home implements OnInit, OnDestroy {
   public cambiarTabAdmin(tab: 'chats' | 'usuarios') { this.chatTab = tab; }
   public toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; }
   public setCurso(curso: string) { this.cursoSeleccionado = curso; }
-  public abrirModalBusqueda() { this.mostrarModalBusqueda = true; this.resultadosBusqueda = []; this.terminoBusqueda = ''; }
-  public cerrarModalBusqueda() { this.mostrarModalBusqueda = false; }
+  
+  public abrirModalBusqueda() { 
+    this.resultadosBusqueda = []; 
+    this.cdr.detectChanges();
+  }
+  
+  public cerrarModalBusqueda() { 
+    this.mostrarModalBusqueda = false; 
+    this.cdr.detectChanges();
+  }
+  
   public toggleNotificaciones() { this.mostrarListaNotis = !this.mostrarListaNotis; }
   public aplicarTemaGuardado() { }
   public cerrarSesion() { this.chatService.desconectar(); localStorage.removeItem('usuario'); this.router.navigate(['/login']); }
@@ -352,6 +412,12 @@ export class Home implements OnInit, OnDestroy {
   public irAVerificaciones() { this.router.navigate(['/admin/verificaciones']); }
   public irAPerfil() { this.router.navigate(['/perfil']); }
   public verAsignatura(n: string) { this.router.navigate(['/asignatura', n]); }
+  
+  // --- NUEVA FUNCIÓN PARA NAVEGAR A MIS APUNTES ---
+  public irAMisApuntes() {
+    this.router.navigate(['/mis-apuntes']);
+  }
+
   public obtenerMisAmigosAceptados() { 
     console.log("[USER] Sincronizando amigos desde el servidor...");
   }

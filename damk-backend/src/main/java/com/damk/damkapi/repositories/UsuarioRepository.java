@@ -1,5 +1,6 @@
 package com.damk.damkapi.repositories;
 
+import com.damk.damkapi.entities.Rol;
 import com.damk.damkapi.entities.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,5 +13,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Boolean existsByUsername(String username);
     Boolean existsByEmail(String email);
     List<Usuario> findByUsernameContainingIgnoreCase(String username);
+    List<Usuario> findByUsernameContainingIgnoreCaseAndRol(String username, Rol rol);
 
 }
